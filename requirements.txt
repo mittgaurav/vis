@@ -1,0 +1,24 @@
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+scipy>=1.7.0
+
+# Tracking
+filterpy>=1.4.5
+motmetrics>=1.2.0
+
+# Deep learning models
+ultralytics>=8.0.0  # For YOLO
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Optional (for other baselines)
+transformers>=4.30.0  # For CLIP, Grounding DINO
+#groundingdino  # Install separately if needed
+#fairseq  # For DINO features
+
+# Utilities
+tqdm>=4.65.0
+matplotlib>=3.5.0
+Pillow>=9.0.0
+pyyaml>=6.0

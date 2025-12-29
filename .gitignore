@@ -1,0 +1,9 @@
+data/*
+results/*
+
+*/__pycache__/*
+
+.vscode/*
+
+*.pt
+yolo12n.pt
