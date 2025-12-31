@@ -19,4 +19,4 @@ tracker:
     min_hits: 3
     iou_threshold: 0.3
 
-device: "cpu"
+device: "mps"

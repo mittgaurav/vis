@@ -13,7 +13,7 @@ detector:
 tracker:
   type: "none"  # CenterTrack does tracking internally
 
-device: "cpu"
+device: "mps"
 
 # NOTE: This is a placeholder config
 # Full CenterTrack requires installation from:

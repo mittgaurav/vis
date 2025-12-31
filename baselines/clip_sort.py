@@ -16,19 +16,30 @@ class CLIPSORTTracker(BaseTracker):
     def _initialize_detector(self):
         """Initialize CLIP model"""
         try:
-            import clip
+            import open_clip
         except ImportError:
-            raise ImportError("CLIP not installed. Install with: pip install git+https://github.com/openai/CLIP.git")
+            raise ImportError(
+                "open_clip not installed. Install with:\n"
+                "  pip install open-clip-torch"
+            )
 
         detector_config = self.config['detector']
         model_name = detector_config.get('model_name', 'ViT-B/32')
 
-        print(f"Loading CLIP {model_name}...")
-        model, preprocess = clip.load(model_name, device=self.device)
+        print(f"Loading open_clip {model_name}...")
+
+        # 🔧 open_clip model + preprocess
+        model, _, preprocess = open_clip.create_model_and_transforms(
+            model_name, pretrained="openai"
+        )
+        model = model.to(self.device)
+        tokenizer = open_clip.get_tokenizer(model_name)
+
         print(f"CLIP loaded on {self.device}")
 
         # Store detector params
         self.preprocess = preprocess
+        self.tokenizer = tokenizer
         self.text_prompt = detector_config['params'].get('text_prompt', 'a bird')
         self.threshold = detector_config.get('conf_threshold', 0.3)
 
@@ -41,7 +52,7 @@ class CLIPSORTTracker(BaseTracker):
 
         # Encode text prompt
         with torch.no_grad():
-            text = clip.tokenize([self.text_prompt, "background"]).to(self.device)
+            text = self.tokenizer([self.text_prompt, "background"]).to(self.device)
             self.text_features = model.encode_text(text)
             self.text_features /= self.text_features.norm(dim=-1, keepdim=True)
 
@@ -79,27 +90,21 @@ class CLIPSORTTracker(BaseTracker):
         for window_size in self.window_sizes:
             for y in range(0, h - window_size + 1, self.stride):
                 for x in range(0, w - window_size + 1, self.stride):
-                    # Extract window
                     window = image_rgb[y:y + window_size, x:x + window_size]
 
-                    # Preprocess for CLIP
                     window_pil = Image.fromarray(window)
                     window_tensor = self.preprocess(window_pil).unsqueeze(0).to(self.device)
 
-                    # Encode image
                     with torch.no_grad():
                         image_features = self.detector.encode_image(window_tensor)
                         image_features /= image_features.norm(dim=-1, keepdim=True)
 
-                        # Compute similarity
                         similarity = (100.0 * image_features @ self.text_features.T).softmax(dim=-1)
                         bird_score = similarity[0, 0].item()
 
-                    # If score above threshold, add detection
                     if bird_score > self.threshold:
                         detections.append([x, y, window_size, window_size, bird_score])
 
-        # Apply non-maximum suppression to remove overlapping detections
         if len(detections) > 0:
             detections = self._nms(np.array(detections), iou_threshold=0.5)
 
@@ -139,8 +144,3 @@ class CLIPSORTTracker(BaseTracker):
             order = order[inds + 1]
 
         return detections[keep]
-
-
-if __name__ == "__main__":
-    print("CLIP + SORT tracker ready!")
-    print("Use: python run_baseline.py --config configs/clip_sort.yaml")

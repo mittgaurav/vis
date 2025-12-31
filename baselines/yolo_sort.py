@@ -29,9 +29,14 @@ class YOLOSORTTracker(BaseTracker):
         self.conf_threshold = detector_config.get('conf_threshold', 0.3)
         self.filter_class = detector_config['params'].get('filter_class', 14)  # Bird class
         self.detect_all_classes = detector_config['params'].get('detect_all_classes', False)
+        self.nms_threshold = detector_config['params'].get('nms_threshold', 0.45)
+        self.img_size = detector_config['params'].get('img_size', 640)
 
         print(
-            f"Detector config: conf={self.conf_threshold}, filter_class={self.filter_class}, detect_all={self.detect_all_classes}")
+            f"Detector config: conf={self.conf_threshold}, "
+            f"nms={self.nms_threshold}, img_size={self.img_size}, "
+            f"filter_class={self.filter_class}, detect_all={self.detect_all_classes}"
+        )
 
         return model
 
@@ -61,6 +66,8 @@ class YOLOSORTTracker(BaseTracker):
         results = self.detector(
             image,
             conf=self.conf_threshold,
+            iou=self.nms_threshold,
+            imgsz=self.img_size,
             device=self.device,
             verbose=False
         )

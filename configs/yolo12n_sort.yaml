@@ -6,15 +6,17 @@ description: "YOLO12 nano + SORT baseline - balanced speed/accuracy"
 detector:
   type: "yolo"
   model_name: "yolo12n"
-  conf_threshold: 0.1
+  conf_threshold: 0.005     # VERY IMPORTANT for small birds
   params:
-    filter_class: 14
-    nms_threshold: 0.45
+    filter_class: 14        # bird class (COCO)
+    nms_threshold: 0.6      # looser NMS for tiny objects
     detect_all_classes: false
+    img_size: 640           # do NOT go lower
+    augment: false
 
 tracker:
   type: "sort"
   params:
-    max_age: 1
-    min_hits: 3
-    iou_threshold: 0.3
+    max_age: 3              # allow missed frames
+    min_hits: 1             # allow fast track init
+    iou_threshold: 0.15     # small boxes = low IoU

@@ -6,7 +6,7 @@ description: "RT-DETR (Refined DETR) + SORT baseline"
 detector:
   type: "rfdetr"
   model_name: "rtdetr-l"  # Options: rtdetr-l, rtdetr-x
-  conf_threshold: 0.1
+  conf_threshold: 0.5
   params:
     filter_class: 14  # Bird class
     detect_all_classes: false
@@ -18,4 +18,4 @@ tracker:
     min_hits: 3
     iou_threshold: 0.3
 
-device: "cpu"
+device: "mps"

@@ -34,7 +34,7 @@ tracker:
     iou_threshold: 0.3
 
 # Device
-device: "cpu"  # Options: cpu, cuda
+device: "mps"
 
 # Debugging
 debug:

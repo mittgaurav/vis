@@ -79,7 +79,7 @@ class RFDETRSORTTracker(BaseTracker):
                 x, y, w, h = x1, y1, x2 - x1, y2 - y1
 
                 # Filter by class if specified
-                if self.detect_all_classes or self.filter_class is None or cls == self.filter_class:
+                if (self.detect_all_classes or self.filter_class is None or cls == self.filter_class) and conf >= self.conf_threshold:
                     detections.append([x, y, w, h, conf])
 
         return np.array(detections) if len(detections) > 0 else np.empty((0, 5))

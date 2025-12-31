@@ -1,5 +1,6 @@
 # Core dependencies
 numpy
+pandas
 opencv  # Mac
 opencv-python  # windows
 scipy>=1.7.0,<1.14.0
@@ -12,6 +13,7 @@ motmetrics>=1.2.0
 ultralytics # YOLO
 pytorch
 torchvision
+open-clip-torch # CLIP
 
 # Optional (for other baselines)
 transformers>=4.30.0,<5.0.0  # For CLIP, Grounding DINO
