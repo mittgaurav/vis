@@ -1,0 +1,43 @@
+# Base configuration for all tracking experiments
+
+# Data paths
+data:
+  root: "data/phase_1/train"
+  annotation_file: "data/annotations/train.json"
+  max_videos: null  # null = process all videos
+
+# Output
+output:
+  dir: "results/baselines"
+  save_predictions: true
+  save_metrics: true
+  visualize: false  # Set to true to create videos (WARNING: slow/heavy)
+
+# Evaluation
+evaluation:
+  metrics:
+    - precision
+    - recall
+    - mean_iou
+    - mota
+    - motp
+    - dotd
+    - num_switches
+  iou_threshold: 0.5
+
+# Common tracker parameters
+tracker:
+  type: "sort"  # Options: sort, deepsort, etc.
+  params:
+    max_age: 1
+    min_hits: 3
+    iou_threshold: 0.3
+
+# Device
+device: "cpu"  # Options: cpu, cuda
+
+# Debugging
+debug:
+  verbose: true
+  log_detections: true
+  save_debug_frames: false

@@ -1,0 +1,20 @@
+# CenterTrack configuration
+
+name: "centertrack"
+description: "CenterTrack end-to-end detection and tracking (placeholder)"
+
+detector:
+  type: "centertrack"
+  model_name: "coco_tracking"
+  conf_threshold: 0.3
+  params:
+    detect_all_classes: false
+
+tracker:
+  type: "none"  # CenterTrack does tracking internally
+
+device: "cpu"
+
+# NOTE: This is a placeholder config
+# Full CenterTrack requires installation from:
+# https://github.com/xingyizhou/CenterTrack

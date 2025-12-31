@@ -1,0 +1,20 @@
+# YOLO12n + SORT configuration
+
+name: "yolo12n_sort"
+description: "YOLO12 nano + SORT baseline - balanced speed/accuracy"
+
+detector:
+  type: "yolo"
+  model_name: "yolo12n"
+  conf_threshold: 0.1
+  params:
+    filter_class: 14
+    nms_threshold: 0.45
+    detect_all_classes: false
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 1
+    min_hits: 3
+    iou_threshold: 0.3

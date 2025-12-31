@@ -1,0 +1,21 @@
+# RF-DETR + SORT configuration
+
+name: "rfdetr_sort"
+description: "RT-DETR (Refined DETR) + SORT baseline"
+
+detector:
+  type: "rfdetr"
+  model_name: "rtdetr-l"  # Options: rtdetr-l, rtdetr-x
+  conf_threshold: 0.1
+  params:
+    filter_class: 14  # Bird class
+    detect_all_classes: false
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 1
+    min_hits: 3
+    iou_threshold: 0.3
+
+device: "cpu"

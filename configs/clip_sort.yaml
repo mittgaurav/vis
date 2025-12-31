@@ -1,0 +1,25 @@
+# CLIP + SORT configuration
+
+name: "clip_sort"
+description: "CLIP zero-shot detection + SORT - sliding window approach"
+
+detector:
+  type: "clip"
+  model_name: "ViT-B/32"  # Options: ViT-B/32, ViT-B/16, ViT-L/14
+  conf_threshold: 0.5
+  params:
+    text_prompt: "a bird"
+    window_sizes: [32, 64, 128]  # Multi-scale windows
+    stride: 16  # Sliding window stride
+    detect_all_classes: false
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 1
+    min_hits: 3
+    iou_threshold: 0.3
+
+device: "cpu"
+
+# WARNING: CLIP sliding window is VERY slow on CPU

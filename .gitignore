@@ -4,6 +4,6 @@ results/*
 */__pycache__/*
 
 .vscode/*
+.idea/
 
 *.pt
-yolo12n.pt
