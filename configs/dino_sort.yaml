@@ -6,17 +6,17 @@ description: "DINOv2 features + background subtraction + SORT"
 detector:
   type: "dino"
   model_name: "dinov2_vits14"  # Options: dinov2_vits14, dinov2_vitb14, dinov2_vitl14
-  conf_threshold: 0.9
+  conf_threshold: 0.85
   params:
-    min_area: 100     # Minimum blob area (pixels²)
-    max_area: 1000    # Maximum blob area (pixels²)
+    min_area: 200     # Minimum blob area (pixels²)
+    max_area: 800     # Maximum blob area (pixels²)
     detect_all_classes: false
 
 tracker:
   type: "sort"
   params:
-    max_age: 2        # Longer for appearance-based tracking
+    max_age: 4        # Longer for appearance-based tracking
     min_hits: 2
-    iou_threshold: 0.5
+    iou_threshold: 0.7
 
 device: "mps"
