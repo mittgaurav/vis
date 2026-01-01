@@ -7,15 +7,16 @@ MAX_VIDEOS=""  # to process all
 
 # List of configs to run (only working baselines)
 CONFIGS=(
-    "configs/motion_yolo_dino_sort.yaml"
-    "configs/motion_multiscale_tracker.yaml"
-    "configs/clip_sort.yaml"  # too slow
+#    "configs/motion_yolo_tracker.yaml"
+    #"configs/motion_yolo_dino_sort.yaml"
+#    "configs/motion_multiscale_tracker.yaml"
+#    "configs/clip_sort.yaml"  # too slow
     "configs/yolo12n_sort.yaml"
     "configs/yolo11s_sort.yaml"
     "configs/rfdetr_sort.yaml"
     "configs/dino_sort.yaml"
-    # "configs/centertrack.yaml"  # Commented out - placeholder
-    # "configs/fairmot.yaml"  # Commented out - placeholder
+    # "configs/centertrack.yaml"  # Commented out
+    # "configs/fairmot.yaml"  # Commented out
 )
 
 echo "========================================"

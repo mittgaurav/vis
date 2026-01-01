@@ -8,7 +8,6 @@ import cv2
 import torch
 from scipy.optimize import linear_sum_assignment
 import sys
-
 sys.path.append('..')
 
 from baselines.base_tracker import BaseTracker
@@ -64,12 +63,14 @@ class RAFTDINOTracker(BaseTracker):
         self.dino_model = torch.hub.load('facebookresearch/dinov2', dino_config['model_name'])
 
         # Handle MPS (Apple Silicon) vs CUDA vs CPU
-        if self.device == 'cuda' and torch.cuda.is_available():
+        # DINO has issues with MPS, force CPU
+        if self.device == 'mps':
+            print("WARNING: DINO doesn't work well with MPS, using CPU for feature extraction")
+            self.dino_model.to('cpu')
+            self.compute_device = 'cpu'
+        elif self.device == 'cuda' and torch.cuda.is_available():
             self.dino_model.to('cuda')
             self.compute_device = 'cuda'
-        elif self.device == 'mps' and torch.backends.mps.is_available():
-            self.dino_model.to('mps')
-            self.compute_device = 'mps'
         else:
             self.dino_model.to('cpu')
             self.compute_device = 'cpu'
@@ -135,7 +136,7 @@ class RAFTDINOTracker(BaseTracker):
             return []
 
         # Compute flow magnitude
-        magnitude = np.sqrt(flow[:, :, 0] ** 2 + flow[:, :, 1] ** 2)
+        magnitude = np.sqrt(flow[:, :, 0]**2 + flow[:, :, 1]**2)
 
         # Threshold
         motion_mask = (magnitude > self.motion_threshold).astype(np.uint8) * 255
@@ -155,7 +156,7 @@ class RAFTDINOTracker(BaseTracker):
                 x, y, w, h = cv2.boundingRect(contour)
 
                 # Confidence based on flow magnitude in region
-                roi_magnitude = magnitude[y:y + h, x:x + w]
+                roi_magnitude = magnitude[y:y+h, x:x+w]
                 avg_magnitude = np.mean(roi_magnitude)
                 confidence = min(1.0, avg_magnitude / 10.0)
 
@@ -174,7 +175,7 @@ class RAFTDINOTracker(BaseTracker):
             x, y, w, h = [int(v) for v in det[:4]]
 
             # Crop and resize
-            crop = image[y:y + h, x:x + w]
+            crop = image[y:y+h, x:x+w]
             if crop.size == 0:
                 features.append(np.zeros(384))
                 continue
@@ -252,7 +253,7 @@ class RAFTDINOTracker(BaseTracker):
 
                 # Combined cost
                 cost_matrix[i, j] = (self.motion_weight * motion_cost +
-                                     self.appearance_weight * appearance_cost)
+                                    self.appearance_weight * appearance_cost)
 
         # Hungarian algorithm
         row_ind, col_ind = linear_sum_assignment(cost_matrix)

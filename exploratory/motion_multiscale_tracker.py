@@ -7,7 +7,6 @@ import cv2
 import torch
 from scipy.optimize import linear_sum_assignment
 import sys
-
 sys.path.append('..')
 
 from baselines.base_tracker import BaseTracker
@@ -88,8 +87,16 @@ class MotionMultiScaleTracker(BaseTracker):
         # 3. DINO for appearance features
         dino_config = config['dino']
         print(f"Loading DINO: {dino_config['model_name']}")
+
+        # DINO has issues with MPS, force CPU for feature extraction
+        if self.device == 'mps':
+            print("WARNING: DINO doesn't work well with MPS, using CPU for feature extraction")
+            self.dino_device = 'cpu'
+        else:
+            self.dino_device = self.device
+
         self.dino_model = torch.hub.load('facebookresearch/dinov2', dino_config['model_name'])
-        self.dino_model.to(self.device)
+        self.dino_model.to(self.dino_device)
         self.dino_model.eval()
         self.dino_similarity_threshold = dino_config['similarity_threshold']
 
@@ -99,7 +106,11 @@ class MotionMultiScaleTracker(BaseTracker):
 
         print("All detection components loaded!")
 
-        return self
+        return {
+            'yolo': self.yolo_model,
+            'bg_subtractor': self.bg_subtractor,
+            'dino': self.dino_model
+        }
 
     def _initialize_tracker(self):
         """Initialize enhanced tracker"""
@@ -114,13 +125,7 @@ class MotionMultiScaleTracker(BaseTracker):
         self.appearance_weight = tracker_params.get('appearance_weight', 0.3)
         self.motion_weight = tracker_params.get('motion_weight', 0.7)
 
-        return self
-
-    def reset(self):
-        """Required by BaseTracker interface"""
-        self.tracks = []
-        self.next_track_id = 1
-        self.prev_frame_gray = None
+        return None  # We manage tracks manually
 
     def _detect_motion_regions(self, image):
         """Stage 1: Detect motion regions using background subtraction"""
@@ -164,7 +169,7 @@ class MotionMultiScaleTracker(BaseTracker):
             x, y, w, h = int(x), int(y), int(w), int(h)
 
             # Crop region
-            crop = image[y:y + h, x:x + w]
+            crop = image[y:y+h, x:x+w]
             if crop.size == 0:
                 continue
 
@@ -214,19 +219,16 @@ class MotionMultiScaleTracker(BaseTracker):
         for det in detections:
             x, y, w, h = [int(v) for v in det[:4]]
 
-            # Crop and resize **on CPU using OpenCV** to avoid MPS bicubic crash
-            crop = image[y:y + h, x:x + w]
+            # Crop and resize
+            crop = image[y:y+h, x:x+w]
             if crop.size == 0:
-                features.append(np.zeros(384))  # DINO feature size for vits14
+                features.append(np.zeros(384))
                 continue
 
-            # Convert to RGB
             crop_rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+            crop_resized = cv2.resize(crop_rgb, (224, 224))
 
-            # Resize using OpenCV instead of PyTorch
-            crop_resized = cv2.resize(crop_rgb, (224, 224), interpolation=cv2.INTER_LINEAR)
-
-            # Convert to tensor
+            # To tensor
             crop_tensor = torch.from_numpy(crop_resized).permute(2, 0, 1).float() / 255.0
             crop_tensor = crop_tensor.unsqueeze(0).to(self.device)
 
@@ -237,7 +239,6 @@ class MotionMultiScaleTracker(BaseTracker):
             features.append(feature)
 
         return np.array(features)
-
 
     def _compute_optical_flow(self, image):
         """Stage 4: Compute optical flow"""
@@ -262,7 +263,7 @@ class MotionMultiScaleTracker(BaseTracker):
             return np.zeros(2)
 
         x, y, w, h = [int(v) for v in bbox]
-        roi_flow = flow[y:y + h, x:x + w]
+        roi_flow = flow[y:y+h, x:x+w]
 
         if roi_flow.size == 0:
             return np.zeros(2)
@@ -303,7 +304,7 @@ class MotionMultiScaleTracker(BaseTracker):
 
                 # Combined cost
                 cost_matrix[i, j] = (self.motion_weight * iou_cost +
-                                     self.appearance_weight * appearance_cost)
+                                    self.appearance_weight * appearance_cost)
 
         # Hungarian algorithm
         if cost_matrix.size > 0:

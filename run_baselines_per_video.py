@@ -61,6 +61,9 @@ def load_tracker(config):
     elif detector_type == 'fairmot':
         from baselines.fairmot import FairMOTTracker
         return FairMOTTracker(config)
+    elif detector_type == 'motion_yolo_tracker':
+        from exploratory.motion_yolo_tracker import MotionYOLOTracker
+        return MotionYOLOTracker(config)
     elif detector_type == 'motion_yolo_dino_sort':
         from exploratory.motion_yolo_dino_sort import MotionYOLODINOTracker
         return MotionYOLODINOTracker(config)

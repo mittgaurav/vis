@@ -5,19 +5,19 @@ description: "RT-DETR (Refined DETR) + SORT baseline"
 
 detector:
   type: "rfdetr"
-  model_name: "rtdetr-l"  # Options: rtdetr-l, rtdetr-x
-  conf_threshold: 0.4
+  model_name: "rtdetr-x"  # Use the larger RT-DETR model
+  conf_threshold: 0.1
   params:
-    filter_class: 14  # Bird class
+    filter_class: 14       # Bird class
     detect_all_classes: false
-    min_area: 100
-    max_area: 1000
+    min_area: 150          # Avoid detecting too small objects
+    max_area: 800          # Avoid detecting too large objects
 
 tracker:
   type: "sort"
   params:
-    max_age: 2
-    min_hits: 2
-    iou_threshold: 0.5
+    max_age: 5             # Allow tracks to persist longer
+    min_hits: 1            # Keep track initialization fast
+    iou_threshold: 0.4     # Loosen IoU threshold to reduce false positives
 
-device: "mps"
+device: "mps"              # Use GPU for better performance
