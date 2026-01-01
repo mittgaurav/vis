@@ -4,6 +4,7 @@ Uses CLIP for zero-shot bird detection via sliding window
 """
 
 import numpy as np
+np.bool = bool
 import torch
 import cv2
 from PIL import Image

@@ -5,6 +5,7 @@ MUCH FASTER than full pipeline
 """
 
 import numpy as np
+np.bool = bool
 import cv2
 import sys
 

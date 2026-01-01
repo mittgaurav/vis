@@ -5,6 +5,7 @@ Reusable evaluation utilities for all baselines
 import json
 from pathlib import Path
 import numpy as np
+np.bool = bool
 from tqdm import tqdm
 
 from utils.metrics import evaluate_tracking, format_results

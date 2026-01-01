@@ -4,7 +4,7 @@ name: "yolo_bytetrack"
 description: "YOLO12 + ByteTrack - strong SOTA-style tracking-by-detection baseline"
 
 detector:
-  type: "yolo"
+  type: "yolo_bytetrack"
   model_name: "yolo12s"
   conf_threshold: 0.002      # keep very low for tiny birds
   params:

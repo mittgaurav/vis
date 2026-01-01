@@ -1,4 +1,5 @@
 import numpy as np
+np.bool = bool
 from scipy.optimize import linear_sum_assignment
 
 from trackers.sort import KalmanBoxTracker  # reuse existing KF

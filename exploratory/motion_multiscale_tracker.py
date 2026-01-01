@@ -4,6 +4,8 @@ Combines: Motion Detection + Multi-Scale YOLO + DINO Features + Optical Flow
 """
 
 import numpy as np
+
+np.bool = bool
 import cv2
 import torch
 from scipy.optimize import linear_sum_assignment

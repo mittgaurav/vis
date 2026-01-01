@@ -1,10 +1,10 @@
-# YOLO12n + SORT configuration
+# YOLO + SORT configuration
 
 name: "yolo_sort"
 description: "YOLO12 + SORT baseline - balanced speed/accuracy"
 
 detector:
-  type: "yolo"
+  type: "yolo_sort"
   model_name: "yolo12s"
   conf_threshold: 0.002     # VERY IMPORTANT for small birds
   params:

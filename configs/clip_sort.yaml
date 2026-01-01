@@ -4,7 +4,7 @@ name: "clip_sort"
 description: "CLIP zero-shot detection + SORT - sliding window approach"
 
 detector:
-  type: "clip"
+  type: "clip_sort"
   model_name: "ViT-B/32"  # Options: ViT-B/32, ViT-B/16, ViT-L/14
   conf_threshold: 0.5
   params:

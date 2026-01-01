@@ -5,6 +5,7 @@ All baseline implementations should inherit from this
 from abc import ABC, abstractmethod
 import time
 import numpy as np
+np.bool = bool
 from tqdm import tqdm
 
 

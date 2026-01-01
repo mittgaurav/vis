@@ -4,7 +4,7 @@ name: "yolo_ocsort"
 description: "YOLO12 + OC-SORT - motion-aware modern baseline"
 
 detector:
-  type: "yolo"
+  type: "yolo_ocsort"
   model_name: "yolo12s"
   conf_threshold: 0.002    # very low for tiny birds
   params:
@@ -15,7 +15,7 @@ detector:
     augment: false
 
 tracker:
-  type: "ocsrt"
+  type: "ocsort"
   params:
     max_age: 3             # allow short occlusions/missed frames
     min_hits: 2            # quick track confirmation

@@ -4,6 +4,7 @@ Combines YOLO + Background Subtraction + Optical Flow with weighted voting
 """
 
 import numpy as np
+np.bool = bool
 import cv2
 import torch
 

@@ -11,6 +11,7 @@ So trackers only need to call these helpers.
 from typing import Any, Dict
 
 import numpy as np
+np.bool = bool
 
 
 def load_yolo_from_config(detector_config: Dict[str, Any], device: str):

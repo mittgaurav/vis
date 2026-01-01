@@ -4,6 +4,7 @@ Implementation based on https://github.com/abewley/sort
 """
 
 import numpy as np
+np.bool = bool
 from scipy.optimize import linear_sum_assignment
 from filterpy.kalman import KalmanFilter
 

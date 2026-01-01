@@ -4,16 +4,16 @@ Uses the official CenterTrack implementation in the parent directory
 """
 
 import numpy as np
+np.bool = bool
 import time
 from tqdm import tqdm
 from baselines.base_tracker import BaseTracker
 
 # Try to import CenterTrack
+import sys
 try:
-    import sys
-
     # adjust path so that CenterTrack/src/lib is importable
-    sys.path.append("CenterTrack/src/lib")
+    sys.path.append("../CenterTrack/src/lib")
     from detector import Detector
     from opts import opts
 except ImportError:
@@ -34,7 +34,8 @@ class CenterTracker(BaseTracker):
             return None
 
         det_cfg = self.config.get("detector", {})
-        model_path = det_cfg.get("model_path", "CenterTrack/mot17_half.pth")
+        # model_path = det_cfg.get("model_path", "../CenterTrack/mot17_half.pth")
+        model_path = det_cfg.get("model_path", "coco_tracking.pth")
         num_classes = det_cfg.get("num_classes", 1)
         track_thresh = det_cfg.get("track_thresh", 0.4)
         pre_thresh = det_cfg.get("pre_thresh", 0.5)

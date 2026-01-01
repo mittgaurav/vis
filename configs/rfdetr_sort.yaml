@@ -4,7 +4,7 @@ name: "rfdetr_sort"
 description: "RT-DETR (Refined DETR) + SORT baseline"
 
 detector:
-  type: "rfdetr"
+  type: "rfdetr_sort"
   model_name: "rtdetr-x"  # Use the larger RT-DETR model
   conf_threshold: 0.1
   params:

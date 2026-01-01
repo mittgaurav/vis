@@ -3,7 +3,6 @@ RF-DETR + SORT tracker implementation
 Uses shared RF-DETR detector helpers.
 """
 
-import numpy as np
 from baselines.base_tracker import BaseTracker
 from trackers.sort import Sort
 from detectors.rfdetr import load_rfdetr_from_config, rfdetr_detect_frame

@@ -4,7 +4,7 @@
 
 ### 1. YOLO + SORT ✅
 **Status:** Fully implemented  
-**Config:** `configs/yolo12n_sort.yaml`, `configs/yolo12s_sort.yaml`  
+**Config:** `configs/yolo_sort.yaml`  
 **File:** `baselines/yolo_sort.py`
 
 **Description:** Standard YOLO object detection + SORT tracking
@@ -16,7 +16,7 @@
 
 **Run:**
 ```bash
-python run_baseline.py --config configs/yolo12n_sort.yaml --max_videos 5
+python run_baseline.py --config configs/yolo_sort.yaml --max_videos 5
 ```
 
 ---
@@ -114,7 +114,7 @@ https://github.com/xingyizhou/CenterTrack
 ### Run Single Baseline
 ```bash
 # YOLO (recommended to start)
-python run_baseline.py --config configs/yolo12n_sort.yaml --max_videos 2
+python run_baseline.py --config configs/yolo_sort.yaml --max_videos 2
 
 # RF-DETR
 python run_baseline.py --config configs/rfdetr_sort.yaml --max_videos 2
@@ -131,11 +131,11 @@ bash run_all_experiments.sh
 ### Override Config Values
 ```bash
 # Lower confidence threshold
-python run_baseline.py --config configs/yolo12n_sort.yaml \
+python run_baseline.py --config configs/yolo_sort.yaml \
     --set detector.conf_threshold=0.05
 
 # Detect all classes (debugging)
-python run_baseline.py --config configs/yolo12n_sort.yaml \
+python run_baseline.py --config configs/yolo_sort.yaml \
     --set detector.params.detect_all_classes=true
 ```
 

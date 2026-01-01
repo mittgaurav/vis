@@ -34,7 +34,7 @@ if __name__ == "__main__":
     from utils.data_loader import SMOT4SBDataset
 
     # Load config
-    with open("configs/yolo11n_sort.yaml", "r") as f:
+    with open("configs/yolo_sort.yaml", "r") as f:
         config = yaml.safe_load(f)
 
     # Load base config and merge

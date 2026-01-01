@@ -4,6 +4,7 @@ Uses motmetrics library for standard tracking metrics
 """
 
 import numpy as np
+np.bool = bool
 import motmetrics as mm
 
 
