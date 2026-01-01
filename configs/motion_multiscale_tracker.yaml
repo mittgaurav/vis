@@ -1,0 +1,47 @@
+# Motion-Guided Multi-Scale Tracker (Novel Approach 1)
+
+name: "motion_multiscale_tracker"
+description: "Novel approach: Motion detection + Multi-scale YOLO + DINO features + Optical Flow"
+
+detector:
+  type: "motion_multiscale"
+
+  # Stage 1: Motion Detection
+  motion_detection:
+    method: "background_subtraction"  # Options: background_subtraction, optical_flow, both
+    bg_subtractor: "MOG2"
+    history: 100
+    var_threshold: 16
+    min_area: 100  # Smaller for birds
+    max_area: 1000
+
+  # Stage 2: Multi-Scale YOLO on motion regions
+  yolo:
+    model_name: "yolo12n"
+    conf_threshold: 0.05  # Very low for small birds
+    scales: [1.0, 1.5]  # Run YOLO at multiple scales
+    filter_class: 14  # Birds
+
+  # Stage 3: DINO features for re-identification
+  dino:
+    model_name: "dinov2_vits14"
+    feature_dim: 384
+    similarity_threshold: 0.7
+
+  # Stage 4: Optical flow for motion prediction
+  optical_flow:
+    method: "farneback"  # Options: raft, farneback
+    use_for_prediction: true
+
+tracker:
+  type: "enhanced_sort"
+  params:
+    max_age: 5  # Longer because we have appearance features
+    min_hits: 2  # Lower because detections are better
+    iou_threshold: 0.2  # Lower for small objects
+    use_appearance: true
+    use_optical_flow: true
+    appearance_weight: 0.3
+    motion_weight: 0.7
+
+device: "mps"

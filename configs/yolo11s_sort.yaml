@@ -6,7 +6,7 @@ description: "YOLO + SORT baseline - balanced speed/accuracy"
 detector:
   type: "yolo"
   model_name: "yolo11s"
-  conf_threshold: 0.005     # VERY IMPORTANT for small birds
+  conf_threshold: 0.01      # VERY IMPORTANT for small birds
   params:
     filter_class: 14        # bird class (COCO)
     nms_threshold: 0.6      # looser NMS for tiny objects

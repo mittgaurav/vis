@@ -28,7 +28,6 @@ class CLIPSORTTracker(BaseTracker):
 
         print(f"Loading open_clip {model_name}...")
 
-        # 🔧 open_clip model + preprocess
         model, _, preprocess = open_clip.create_model_and_transforms(
             model_name, pretrained="openai"
         )
@@ -46,9 +45,12 @@ class CLIPSORTTracker(BaseTracker):
         # Sliding window params
         self.window_sizes = detector_config['params'].get('window_sizes', [32, 64, 128])
         self.stride = detector_config['params'].get('stride', 16)
+        self.min_area = detector_config['params'].get('min_area', 0)
+        self.max_area = detector_config['params'].get('max_area', float('inf'))
 
         print(f"CLIP config: prompt='{self.text_prompt}', threshold={self.threshold}")
         print(f"Sliding window: sizes={self.window_sizes}, stride={self.stride}")
+        print(f"Area filter: [{self.min_area}, {self.max_area}]")
 
         # Encode text prompt
         with torch.no_grad():
@@ -72,38 +74,53 @@ class CLIPSORTTracker(BaseTracker):
 
     def _detect_frame(self, image):
         """
-        Run CLIP detection via sliding window
-
-        Args:
-            image: BGR image (H, W, 3)
-
-        Returns:
-            detections: numpy array (N, 5) of [x, y, w, h, confidence]
+        Run CLIP detection via sliding window (batched for speed)
         """
         h, w = image.shape[:2]
         detections = []
 
-        # Convert BGR to RGB for CLIP
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Multi-scale sliding window
+        max_windows = self.config['detector']['params'].get('max_windows_per_frame', 512)
+        stride = self.config['detector']['params'].get('stride', self.stride)
+
+        windows = []
+        coords = []
+
         for window_size in self.window_sizes:
-            for y in range(0, h - window_size + 1, self.stride):
-                for x in range(0, w - window_size + 1, self.stride):
+            for y in range(0, h - window_size + 1, stride):
+                for x in range(0, w - window_size + 1, stride):
                     window = image_rgb[y:y + window_size, x:x + window_size]
+                    windows.append(self.preprocess(Image.fromarray(window)))
+                    coords.append((x, y, window_size, window_size))
 
-                    window_pil = Image.fromarray(window)
-                    window_tensor = self.preprocess(window_pil).unsqueeze(0).to(self.device)
+                    if len(windows) >= max_windows:
+                        break
+                if len(windows) >= max_windows:
+                    break
+            if len(windows) >= max_windows:
+                break
 
-                    with torch.no_grad():
-                        image_features = self.detector.encode_image(window_tensor)
-                        image_features /= image_features.norm(dim=-1, keepdim=True)
+        if len(windows) == 0:
+            return np.empty((0, 5))
 
-                        similarity = (100.0 * image_features @ self.text_features.T).softmax(dim=-1)
-                        bird_score = similarity[0, 0].item()
+        windows_tensor = torch.stack(windows).to(self.device)
+        with torch.no_grad():
+            image_features = self.detector.encode_image(windows_tensor)
+            image_features /= image_features.norm(dim=-1, keepdim=True)
 
-                    if bird_score > self.threshold:
-                        detections.append([x, y, window_size, window_size, bird_score])
+            similarity = (100.0 * image_features @ self.text_features.T).softmax(dim=-1)
+            bird_scores = similarity[:, 0].cpu().numpy()
+
+        # Collect detections above threshold
+        for (x, y, ws, hs), score in zip(coords, bird_scores):
+            if score > self.threshold:
+                # ✅ NEW (critical)
+                area = ws * hs
+                if area < self.min_area or area > self.max_area:
+                    continue
+
+                detections.append([x, y, ws, hs, score])
 
         if len(detections) > 0:
             detections = self._nms(np.array(detections), iou_threshold=0.5)
@@ -111,7 +128,7 @@ class CLIPSORTTracker(BaseTracker):
         return np.array(detections) if len(detections) > 0 else np.empty((0, 5))
 
     def _nms(self, detections, iou_threshold=0.5):
-        """Non-maximum suppression to remove overlapping boxes"""
+        """Non-maximum suppression"""
         if len(detections) == 0:
             return detections
 

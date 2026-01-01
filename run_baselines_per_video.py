@@ -61,6 +61,18 @@ def load_tracker(config):
     elif detector_type == 'fairmot':
         from baselines.fairmot import FairMOTTracker
         return FairMOTTracker(config)
+    elif detector_type == 'motion_yolo_dino_sort':
+        from exploratory.motion_yolo_dino_sort import MotionYOLODINOTracker
+        return MotionYOLODINOTracker(config)
+    elif detector_type == 'motion_multiscale':
+        from exploratory.motion_multiscale_tracker import MotionMultiScaleTracker
+        return MotionMultiScaleTracker(config)
+    elif detector_type == 'raft_dino':
+        from exploratory.raft_dino_tracker import RAFTDINOTracker
+        return RAFTDINOTracker(config)
+    elif detector_type == 'ensemble':
+        from exploratory.ensemble_tracker import EnsembleTracker
+        return EnsembleTracker(config)
     else:
         raise ValueError(f"Unknown detector type: {detector_type}")
 

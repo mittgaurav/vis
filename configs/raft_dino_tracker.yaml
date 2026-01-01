@@ -1,0 +1,30 @@
+# RAFT-DINO Tracker (Novel Approach 2)
+
+name: "raft_dino_tracker"
+description: "Novel approach: Dense optical flow (RAFT) + DINO appearance features"
+
+detector:
+  type: "raft_dino"
+
+  # Motion detection via optical flow
+  optical_flow:
+    method: "farneback"  # Options: farneback (faster), raft (more accurate)
+    motion_threshold: 2.0  # Minimum flow magnitude to consider as motion
+    min_area: 25
+    max_area: 5000
+
+  # DINO for appearance
+  dino:
+    model_name: "dinov2_vits14"
+    feature_dim: 384
+
+tracker:
+  type: "appearance_based"
+  params:
+    max_age: 5
+    min_hits: 2
+    appearance_threshold: 0.6  # Cosine similarity threshold
+    motion_weight: 0.5
+    appearance_weight: 0.5
+
+device: "mps"

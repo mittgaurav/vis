@@ -1,0 +1,49 @@
+# Multi-Detector Ensemble Tracker (Novel Approach 3)
+
+name: "ensemble_tracker"
+description: "Novel approach: Ensemble of YOLO + Background Subtraction + Optical Flow"
+
+detector:
+  type: "ensemble"
+
+  # Detector 1: YOLO
+  yolo:
+    enabled: true
+    model_name: "yolo12n"
+    conf_threshold: 0.05
+    filter_class: 14
+    weight: 0.5  # Confidence weight in ensemble
+
+  # Detector 2: Background Subtraction
+  background_subtraction:
+    enabled: true
+    method: "MOG2"
+    history: 500
+    var_threshold: 16
+    min_area: 25
+    max_area: 5000
+    weight: 0.3
+
+  # Detector 3: Optical Flow
+  optical_flow:
+    enabled: true
+    method: "farneback"
+    motion_threshold: 2.0
+    min_area: 25
+    max_area: 5000
+    weight: 0.2
+
+  # Fusion parameters
+  fusion:
+    method: "weighted_nms"  # Options: weighted_nms, voting, union
+    nms_threshold: 0.3
+    min_detectors: 1  # Minimum detectors that must agree
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 3
+    min_hits: 2
+    iou_threshold: 0.3
+
+device: "mps"

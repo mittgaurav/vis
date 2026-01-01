@@ -1,4 +1,4 @@
-# CLIP + SORT configuration
+# CLIP + SORT configuration (batched sliding window for speed)
 
 name: "clip_sort"
 description: "CLIP zero-shot detection + SORT - sliding window approach"
@@ -6,12 +6,15 @@ description: "CLIP zero-shot detection + SORT - sliding window approach"
 detector:
   type: "clip"
   model_name: "ViT-B/32"  # Options: ViT-B/32, ViT-B/16, ViT-L/14
-  conf_threshold: 0.2
+  conf_threshold: 0.5
   params:
     text_prompt: "a bird"
-    window_sizes: [32, 64, 128]  # Multi-scale windows
-    stride: 16  # Sliding window stride
+    window_sizes: [32, 48]        # fewer scales to speed up
+    stride: 48                    # bigger stride → fewer windows
+    max_windows_per_frame: 512    # cap number of windows per frame
     detect_all_classes: false
+    min_area: 100
+    max_area: 1000
 
 tracker:
   type: "sort"

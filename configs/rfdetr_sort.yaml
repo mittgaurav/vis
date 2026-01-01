@@ -6,16 +6,18 @@ description: "RT-DETR (Refined DETR) + SORT baseline"
 detector:
   type: "rfdetr"
   model_name: "rtdetr-l"  # Options: rtdetr-l, rtdetr-x
-  conf_threshold: 0.5
+  conf_threshold: 0.4
   params:
     filter_class: 14  # Bird class
     detect_all_classes: false
+    min_area: 100
+    max_area: 1000
 
 tracker:
   type: "sort"
   params:
-    max_age: 1
-    min_hits: 3
-    iou_threshold: 0.3
+    max_age: 2
+    min_hits: 2
+    iou_threshold: 0.5
 
 device: "mps"

@@ -1,0 +1,36 @@
+name: "motion_yolo_dino_sort"
+description: "Motion-gated YOLO + DINO appearance + enhanced SORT (SMOT birds)"
+
+detector:
+  type: "motion_yolo_dino_sort"
+
+  motion_detection:
+    method: "background_subtraction"  # Options: background_subtraction, optical_flow, both
+    bg_subtractor: "MOG2"
+    history: 100
+    var_threshold: 16
+    min_area: 100  # Smaller for birds
+    max_area: 1000
+
+  yolo:
+    model_name: "yolo12n"
+    conf_threshold: 0.05  # Very low for small birds
+    scales: [ 1.0, 1.5]  # Run YOLO at multiple scales
+    filter_class: 14  # Birds
+    min_area: 100
+    max_area: 1000
+
+  dino:
+    model_name: "dinov2_vits14"
+    feature_dim: 384
+
+tracker:
+  type: "appearance_sort"
+  params:
+    max_age: 5
+    min_hits: 2
+    iou_threshold: 0.3
+    appearance_weight: 0.4
+    iou_weight: 0.6
+
+device: "mps"

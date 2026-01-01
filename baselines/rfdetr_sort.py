@@ -27,10 +27,16 @@ class RFDETRSORTTracker(BaseTracker):
 
         # Store detector params
         self.conf_threshold = detector_config.get('conf_threshold', 0.3)
-        self.filter_class = detector_config['params'].get('filter_class', 14)  # Bird class
+        self.filter_class = detector_config['params'].get('filter_class', 14)
         self.detect_all_classes = detector_config['params'].get('detect_all_classes', False)
+        self.min_area = detector_config['params'].get('min_area', 0)
+        self.max_area = detector_config['params'].get('max_area', float('inf'))
 
-        print(f"Detector config: conf={self.conf_threshold}, filter_class={self.filter_class}")
+        print(
+            f"Detector config: conf={self.conf_threshold}, "
+            f"class={self.filter_class}, "
+            f"area=[{self.min_area}, {self.max_area}]"
+        )
 
         return model
 
@@ -56,7 +62,6 @@ class RFDETRSORTTracker(BaseTracker):
         Returns:
             detections: numpy array (N, 5) of [x, y, w, h, confidence]
         """
-        # Run inference
         results = self.detector(
             image,
             conf=self.conf_threshold,
@@ -66,7 +71,6 @@ class RFDETRSORTTracker(BaseTracker):
 
         detections = []
 
-        # Extract detections
         for result in results:
             boxes = result.boxes
 
@@ -74,12 +78,18 @@ class RFDETRSORTTracker(BaseTracker):
                 cls = int(box.cls[0])
                 conf = float(box.conf[0])
 
-                # Get box coordinates
                 x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                 x, y, w, h = x1, y1, x2 - x1, y2 - y1
 
-                # Filter by class if specified
-                if (self.detect_all_classes or self.filter_class is None or cls == self.filter_class) and conf >= self.conf_threshold:
+                # ✅ NEW (minimal)
+                area = w * h
+                if area < self.min_area or area > self.max_area:
+                    continue
+
+                if (
+                    (self.detect_all_classes or self.filter_class is None or cls == self.filter_class)
+                    and conf >= self.conf_threshold
+                ):
                     detections.append([x, y, w, h, conf])
 
         return np.array(detections) if len(detections) > 0 else np.empty((0, 5))
