@@ -35,11 +35,7 @@ class DINOSORTTracker(BaseTracker):
         print(f"DINOv2 loaded on {self.device}")
 
         # Initialize background subtractor for motion detection
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
-            history=500,
-            varThreshold=16,
-            detectShadows=False
-        )
+        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=16, detectShadows=False)
 
         # Store params
         self.min_area = detector_config['params'].get('min_area', 50)

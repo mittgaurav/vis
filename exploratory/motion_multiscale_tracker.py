@@ -7,7 +7,6 @@ import cv2
 import torch
 from scipy.optimize import linear_sum_assignment
 import sys
-sys.path.append('..')
 
 from baselines.base_tracker import BaseTracker
 from trackers.sort_tracker import KalmanBoxTracker

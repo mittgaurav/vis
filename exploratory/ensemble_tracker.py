@@ -5,7 +5,6 @@ Combines YOLO + Background Subtraction + Optical Flow with weighted voting
 import numpy as np
 import cv2
 import torch
-import sys
 
 from baselines.base_tracker import BaseTracker
 from trackers.sort_tracker import Sort
