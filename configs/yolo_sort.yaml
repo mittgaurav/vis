@@ -1,0 +1,22 @@
+# YOLO12n + SORT configuration
+
+name: "yolo_sort"
+description: "YOLO12 + SORT baseline - balanced speed/accuracy"
+
+detector:
+  type: "yolo"
+  model_name: "yolo12s"
+  conf_threshold: 0.002     # VERY IMPORTANT for small birds
+  params:
+    filter_class: 14        # bird class (COCO)
+    nms_threshold: 0.5      # looser NMS for tiny objects
+    detect_all_classes: false
+    img_size: 640           # do NOT go lower
+    augment: false
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 3              # allow missed frames
+    min_hits: 2             # allow fast track init
+    iou_threshold: 0.3      # small boxes = low IoU

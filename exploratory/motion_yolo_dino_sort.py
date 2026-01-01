@@ -8,7 +8,7 @@ import cv2
 import torch
 from scipy.optimize import linear_sum_assignment
 from baselines.base_tracker import BaseTracker
-from trackers.sort_tracker import KalmanBoxTracker
+from trackers.sort import KalmanBoxTracker
 
 
 class Track:
@@ -25,43 +25,40 @@ class MotionYOLODINOTracker(BaseTracker):
 
     def _initialize_detector(self):
         """Initialize all detection components"""
-        cfg = self.config['detector']
+        cfg = self.config["detector"]
 
         # Motion detection
-        m = cfg['motion_detection']
-        self.bg = cv2.createBackgroundSubtractorMOG2(
-            history=m['history'],
-            varThreshold=m['var_threshold'],
-            detectShadows=False
-        )
-        self.motion_min_area = m['min_area']
-        self.motion_max_area = m['max_area']
+        m = cfg["motion_detection"]
+        self.bg = cv2.createBackgroundSubtractorMOG2(history=m["history"], varThreshold=m["var_threshold"], detectShadows=False)
+        self.motion_min_area = m["min_area"]
+        self.motion_max_area = m["max_area"]
 
         # YOLO
         from ultralytics import YOLO
-        y = cfg['yolo']
+
+        y = cfg["yolo"]
         self.yolo = YOLO(f"{y['model_name']}.pt").to(self.device)
-        self.yolo_conf = y['conf_threshold']
-        self.filter_class = y.get('filter_class', 14)
-        self.yolo_min_area = y.get('min_area', 0)
-        self.yolo_max_area = y.get('max_area', np.inf)
+        self.yolo_conf = y["conf_threshold"]
+        self.filter_class = y.get("filter_class", 14)
+        self.yolo_min_area = y.get("min_area", 0)
+        self.yolo_max_area = y.get("max_area", np.inf)
 
         # DINO
-        d = cfg['dino']
-        self.dino = torch.hub.load('facebookresearch/dinov2', d['model_name'])
+        d = cfg["dino"]
+        self.dino = torch.hub.load("facebookresearch/dinov2", d["model_name"])
         self.dino.eval().to(self.device)
-        self.dino_similarity_threshold = d.get('similarity_threshold', 0.7)
+        self.dino_similarity_threshold = d.get("similarity_threshold", 0.7)
 
         return self
 
     def _initialize_tracker(self):
         """Initialize tracker parameters"""
-        p = self.config['tracker']['params']
-        self.max_age = p['max_age']
-        self.min_hits = p['min_hits']
-        self.iou_thr = p['iou_threshold']
-        self.app_w = p.get('appearance_weight', 0.5)
-        self.iou_w = p.get('iou_weight', 0.5)
+        p = self.config["tracker"]["params"]
+        self.max_age = p["max_age"]
+        self.min_hits = p["min_hits"]
+        self.iou_thr = p["iou_threshold"]
+        self.app_w = p.get("appearance_weight", 0.5)
+        self.iou_w = p.get("iou_weight", 0.5)
 
         self.tracks = []
         self.next_id = 1
@@ -74,12 +71,8 @@ class MotionYOLODINOTracker(BaseTracker):
         self.tracks = []
         self.next_id = 1
         self._features = None
-        if hasattr(self, 'bg'):
-            self.bg = cv2.createBackgroundSubtractorMOG2(
-                history=self.config['detector']['motion_detection']['history'],
-                varThreshold=self.config['detector']['motion_detection']['var_threshold'],
-                detectShadows=False
-            )
+        if hasattr(self, "bg"):
+            self.bg = cv2.createBackgroundSubtractorMOG2(history=self.config["detector"]["motion_detection"]["history"], varThreshold=self.config["detector"]["motion_detection"]["var_threshold"], detectShadows=False)
 
     # ---------------- MOTION ----------------
     def _motion_regions(self, img):
@@ -103,7 +96,7 @@ class MotionYOLODINOTracker(BaseTracker):
             regions = [(0, 0, img.shape[1], img.shape[0])]
 
         for x, y, w, h in regions:
-            crop = img[y:y+h, x:x+w]
+            crop = img[y : y + h, x : x + w]
             if crop.size == 0:
                 continue
 
@@ -119,7 +112,7 @@ class MotionYOLODINOTracker(BaseTracker):
                     if area < self.yolo_min_area or area > self.yolo_max_area:
                         continue
 
-                    dets.append([x+x1, y+y1, w2, h2, float(b.conf[0])])
+                    dets.append([x + x1, y + y1, w2, h2, float(b.conf[0])])
 
         return np.array(dets) if dets else np.empty((0, 5))
 
@@ -128,7 +121,7 @@ class MotionYOLODINOTracker(BaseTracker):
         feats = []
         for d in dets:
             x, y, w, h = map(int, d[:4])
-            crop = img[y:y+h, x:x+w]
+            crop = img[y : y + h, x : x + w]
             if crop.size == 0:
                 feats.append(np.zeros(384))
                 continue
@@ -138,7 +131,7 @@ class MotionYOLODINOTracker(BaseTracker):
             crop_resized = cv2.resize(crop_rgb, (224, 224), interpolation=cv2.INTER_LINEAR)
 
             # Convert to tensor
-            t = torch.from_numpy(crop_resized).permute(2, 0, 1).float().unsqueeze(0)/255.
+            t = torch.from_numpy(crop_resized).permute(2, 0, 1).float().unsqueeze(0) / 255.0
             t = t.to(self.device)
 
             # Extract features
@@ -148,7 +141,6 @@ class MotionYOLODINOTracker(BaseTracker):
             feats.append(f)
 
         return np.array(feats)
-
 
     # ---------------- TRACKING ----------------
     def _associate(self, dets, feats):
@@ -162,7 +154,7 @@ class MotionYOLODINOTracker(BaseTracker):
                 app = 0.5
                 if t.feature is not None:
                     app = 1 - np.dot(feats[i], t.feature)
-                cost[i, j] = self.iou_w*(1-iou) + self.app_w*app
+                cost[i, j] = self.iou_w * (1 - iou) + self.app_w * app
 
         r, c = linear_sum_assignment(cost)
         matches, ud, ut = [], [], []
@@ -187,9 +179,9 @@ class MotionYOLODINOTracker(BaseTracker):
         x1, y1, w1, h1 = a
         x2, y2, w2, h2 = b
         xi1, yi1 = max(x1, x2), max(y1, y2)
-        xi2, yi2 = min(x1+w1, x2+w2), min(y1+h1, y2+h2)
-        inter = max(0, xi2-xi1)*max(0, yi2-yi1)
-        return inter/(w1*h1+w2*h2-inter+1e-6)
+        xi2, yi2 = min(x1 + w1, x2 + w2), min(y1 + h1, y2 + h2)
+        inter = max(0, xi2 - xi1) * max(0, yi2 - yi1)
+        return inter / (w1 * h1 + w2 * h2 - inter + 1e-6)
 
     # ---------------- PIPELINE ----------------
     def _detect_frame(self, img):

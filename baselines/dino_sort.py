@@ -1,15 +1,19 @@
 """
+MOTION BASED TRACKER WITH BACKGROUND SUBTRACTION + DINO FEATURES
+THIS IS LOTS AND LOTS OF FALSE POSITIVES
+
 DINO features + appearance-based tracking
 Uses DINOv2 for feature extraction and similarity-based matching
 """
+
 import numpy as np
 import torch
 import cv2
 from baselines.base_tracker import BaseTracker
-from trackers.sort_tracker import Sort
+from trackers.sort import Sort
 
 
-class DINOSORTTracker(BaseTracker):
+class DINOSORT(BaseTracker):
     """
     DINOv2 feature-based tracker
     Uses background subtraction for detection + DINO features for matching
@@ -22,13 +26,13 @@ class DINOSORTTracker(BaseTracker):
         except ImportError:
             raise ImportError("torch not installed")
 
-        detector_config = self.config['detector']
-        model_name = detector_config.get('model_name', 'dinov2_vits14')
+        detector_config = self.config["detector"]
+        model_name = detector_config.get("model_name", "dinov2_vits14")
 
         print(f"Loading DINOv2 {model_name}...")
 
         # Load DINOv2 from torch hub
-        self.dino_model = torch.hub.load('facebookresearch/dinov2', model_name)
+        self.dino_model = torch.hub.load("facebookresearch/dinov2", model_name)
         self.dino_model.to(self.device)
         self.dino_model.eval()
 
@@ -38,9 +42,9 @@ class DINOSORTTracker(BaseTracker):
         self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=16, detectShadows=False)
 
         # Store params
-        self.min_area = detector_config['params'].get('min_area', 50)
-        self.max_area = detector_config['params'].get('max_area', 10000)
-        self.conf_threshold = detector_config.get('conf_threshold', 0.5)
+        self.min_area = detector_config["params"].get("min_area", 50)
+        self.max_area = detector_config["params"].get("max_area", 10000)
+        self.conf_threshold = detector_config.get("conf_threshold", 0.5)
 
         print(f"Background subtraction config: min_area={self.min_area}, max_area={self.max_area}")
 
@@ -48,14 +52,10 @@ class DINOSORTTracker(BaseTracker):
 
     def _initialize_tracker(self):
         """Initialize SORT tracker with appearance features"""
-        tracker_params = self.config['tracker']['params']
+        tracker_params = self.config["tracker"]["params"]
 
         # Use standard SORT but we'll enhance with DINO features
-        tracker = Sort(
-            max_age=tracker_params.get('max_age', 3),  # Longer for appearance-based
-            min_hits=tracker_params.get('min_hits', 3),
-            iou_threshold=tracker_params.get('iou_threshold', 0.3)
-        )
+        tracker = Sort(max_age=tracker_params.get("max_age", 3), min_hits=tracker_params.get("min_hits", 3), iou_threshold=tracker_params.get("iou_threshold", 0.3))  # Longer for appearance-based
 
         return tracker
 
@@ -112,7 +112,7 @@ class DINOSORTTracker(BaseTracker):
         x, y, w, h = [int(v) for v in bbox]
 
         # Crop region
-        crop = image[y:y + h, x:x + w]
+        crop = image[y : y + h, x : x + w]
 
         if crop.size == 0:
             return np.zeros(384)  # Default feature size for dinov2_vits14

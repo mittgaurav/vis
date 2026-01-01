@@ -2,15 +2,16 @@
 CLIP + SORT tracker implementation
 Uses CLIP for zero-shot bird detection via sliding window
 """
+
 import numpy as np
 import torch
 import cv2
 from PIL import Image
 from baselines.base_tracker import BaseTracker
-from trackers.sort_tracker import Sort
+from trackers.sort import Sort
 
 
-class CLIPSORTTracker(BaseTracker):
+class CLIPSORT(BaseTracker):
     """CLIP detector (sliding window) + SORT tracker"""
 
     def _initialize_detector(self):
@@ -18,19 +19,14 @@ class CLIPSORTTracker(BaseTracker):
         try:
             import open_clip
         except ImportError:
-            raise ImportError(
-                "open_clip not installed. Install with:\n"
-                "  pip install open-clip-torch"
-            )
+            raise ImportError("open_clip not installed. Install with:\n" "  pip install open-clip-torch")
 
-        detector_config = self.config['detector']
-        model_name = detector_config.get('model_name', 'ViT-B/32')
+        detector_config = self.config["detector"]
+        model_name = detector_config.get("model_name", "ViT-B/32")
 
         print(f"Loading open_clip {model_name}...")
 
-        model, _, preprocess = open_clip.create_model_and_transforms(
-            model_name, pretrained="openai"
-        )
+        model, _, preprocess = open_clip.create_model_and_transforms(model_name, pretrained="openai")
         model = model.to(self.device)
         tokenizer = open_clip.get_tokenizer(model_name)
 
@@ -39,14 +35,14 @@ class CLIPSORTTracker(BaseTracker):
         # Store detector params
         self.preprocess = preprocess
         self.tokenizer = tokenizer
-        self.text_prompt = detector_config['params'].get('text_prompt', 'a bird')
-        self.threshold = detector_config.get('conf_threshold', 0.3)
+        self.text_prompt = detector_config["params"].get("text_prompt", "a bird")
+        self.threshold = detector_config.get("conf_threshold", 0.3)
 
         # Sliding window params
-        self.window_sizes = detector_config['params'].get('window_sizes', [32, 64, 128])
-        self.stride = detector_config['params'].get('stride', 16)
-        self.min_area = detector_config['params'].get('min_area', 0)
-        self.max_area = detector_config['params'].get('max_area', float('inf'))
+        self.window_sizes = detector_config["params"].get("window_sizes", [32, 64, 128])
+        self.stride = detector_config["params"].get("stride", 16)
+        self.min_area = detector_config["params"].get("min_area", 0)
+        self.max_area = detector_config["params"].get("max_area", float("inf"))
 
         print(f"CLIP config: prompt='{self.text_prompt}', threshold={self.threshold}")
         print(f"Sliding window: sizes={self.window_sizes}, stride={self.stride}")
@@ -62,13 +58,9 @@ class CLIPSORTTracker(BaseTracker):
 
     def _initialize_tracker(self):
         """Initialize SORT tracker"""
-        tracker_params = self.config['tracker']['params']
+        tracker_params = self.config["tracker"]["params"]
 
-        tracker = Sort(
-            max_age=tracker_params.get('max_age', 1),
-            min_hits=tracker_params.get('min_hits', 3),
-            iou_threshold=tracker_params.get('iou_threshold', 0.3)
-        )
+        tracker = Sort(max_age=tracker_params.get("max_age", 1), min_hits=tracker_params.get("min_hits", 3), iou_threshold=tracker_params.get("iou_threshold", 0.3))
 
         return tracker
 
@@ -81,8 +73,8 @@ class CLIPSORTTracker(BaseTracker):
 
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        max_windows = self.config['detector']['params'].get('max_windows_per_frame', 512)
-        stride = self.config['detector']['params'].get('stride', self.stride)
+        max_windows = self.config["detector"]["params"].get("max_windows_per_frame", 512)
+        stride = self.config["detector"]["params"].get("stride", self.stride)
 
         windows = []
         coords = []
@@ -90,7 +82,7 @@ class CLIPSORTTracker(BaseTracker):
         for window_size in self.window_sizes:
             for y in range(0, h - window_size + 1, stride):
                 for x in range(0, w - window_size + 1, stride):
-                    window = image_rgb[y:y + window_size, x:x + window_size]
+                    window = image_rgb[y : y + window_size, x : x + window_size]
                     windows.append(self.preprocess(Image.fromarray(window)))
                     coords.append((x, y, window_size, window_size))
 

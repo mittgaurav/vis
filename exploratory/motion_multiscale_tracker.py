@@ -2,6 +2,7 @@
 Motion-Guided Multi-Scale Tracker (Novel Approach 1)
 Combines: Motion Detection + Multi-Scale YOLO + DINO Features + Optical Flow
 """
+
 import numpy as np
 import cv2
 import torch
@@ -9,7 +10,7 @@ from scipy.optimize import linear_sum_assignment
 import sys
 
 from baselines.base_tracker import BaseTracker
-from trackers.sort_tracker import KalmanBoxTracker
+from trackers.sort import KalmanBoxTracker
 
 
 class EnhancedTrack:
@@ -61,68 +62,61 @@ class MotionMultiScaleTracker(BaseTracker):
 
     def _initialize_detector(self):
         """Initialize all detection components"""
-        config = self.config['detector']
+        config = self.config["detector"]
 
         # 1. YOLO for object detection
         from ultralytics import YOLO
-        yolo_config = config['yolo']
+
+        yolo_config = config["yolo"]
         print(f"Loading YOLO: {yolo_config['model_name']}")
         self.yolo_model = YOLO(f"{yolo_config['model_name']}.pt")
         self.yolo_model.to(self.device)
-        self.yolo_scales = yolo_config['scales']
-        self.yolo_conf = yolo_config['conf_threshold']
-        self.filter_class = yolo_config.get('filter_class', 14)
+        self.yolo_scales = yolo_config["scales"]
+        self.yolo_conf = yolo_config["conf_threshold"]
+        self.filter_class = yolo_config.get("filter_class", 14)
 
         # 2. Background subtractor for motion detection
-        motion_config = config['motion_detection']
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
-            history=motion_config['history'],
-            varThreshold=motion_config['var_threshold'],
-            detectShadows=False
-        )
-        self.motion_min_area = motion_config['min_area']
-        self.motion_max_area = motion_config['max_area']
+        motion_config = config["motion_detection"]
+        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=motion_config["history"], varThreshold=motion_config["var_threshold"], detectShadows=False)
+        self.motion_min_area = motion_config["min_area"]
+        self.motion_max_area = motion_config["max_area"]
 
         # 3. DINO for appearance features
-        dino_config = config['dino']
+        dino_config = config["dino"]
         print(f"Loading DINO: {dino_config['model_name']}")
 
         # DINO has issues with MPS, force CPU for feature extraction
-        if self.device == 'mps':
+        if self.device == "mps":
             print("WARNING: DINO doesn't work well with MPS, using CPU for feature extraction")
-            self.dino_device = 'cpu'
+            self.dino_device = "cpu"
         else:
             self.dino_device = self.device
 
-        self.dino_model = torch.hub.load('facebookresearch/dinov2', dino_config['model_name'])
+        self.dino_model = torch.hub.load("facebookresearch/dinov2", dino_config["model_name"])
         self.dino_model.to(self.dino_device)
         self.dino_model.eval()
-        self.dino_similarity_threshold = dino_config['similarity_threshold']
+        self.dino_similarity_threshold = dino_config["similarity_threshold"]
 
         # 4. Optical flow (initialized per video)
         self.prev_frame_gray = None
-        self.optical_flow_method = config['optical_flow']['method']
+        self.optical_flow_method = config["optical_flow"]["method"]
 
         print("All detection components loaded!")
 
-        return {
-            'yolo': self.yolo_model,
-            'bg_subtractor': self.bg_subtractor,
-            'dino': self.dino_model
-        }
+        return {"yolo": self.yolo_model, "bg_subtractor": self.bg_subtractor, "dino": self.dino_model}
 
     def _initialize_tracker(self):
         """Initialize enhanced tracker"""
         self.tracks = []
         self.next_track_id = 1
 
-        tracker_params = self.config['tracker']['params']
-        self.max_age = tracker_params['max_age']
-        self.min_hits = tracker_params['min_hits']
-        self.iou_threshold = tracker_params['iou_threshold']
-        self.use_appearance = tracker_params['use_appearance']
-        self.appearance_weight = tracker_params.get('appearance_weight', 0.3)
-        self.motion_weight = tracker_params.get('motion_weight', 0.7)
+        tracker_params = self.config["tracker"]["params"]
+        self.max_age = tracker_params["max_age"]
+        self.min_hits = tracker_params["min_hits"]
+        self.iou_threshold = tracker_params["iou_threshold"]
+        self.use_appearance = tracker_params["use_appearance"]
+        self.appearance_weight = tracker_params.get("appearance_weight", 0.3)
+        self.motion_weight = tracker_params.get("motion_weight", 0.7)
 
         return None  # We manage tracks manually
 
@@ -168,7 +162,7 @@ class MotionMultiScaleTracker(BaseTracker):
             x, y, w, h = int(x), int(y), int(w), int(h)
 
             # Crop region
-            crop = image[y:y+h, x:x+w]
+            crop = image[y : y + h, x : x + w]
             if crop.size == 0:
                 continue
 
@@ -219,7 +213,7 @@ class MotionMultiScaleTracker(BaseTracker):
             x, y, w, h = [int(v) for v in det[:4]]
 
             # Crop and resize
-            crop = image[y:y+h, x:x+w]
+            crop = image[y : y + h, x : x + w]
             if crop.size == 0:
                 features.append(np.zeros(384))
                 continue
@@ -248,10 +242,7 @@ class MotionMultiScaleTracker(BaseTracker):
             return None
 
         # Compute dense optical flow using Farneback
-        flow = cv2.calcOpticalFlowFarneback(
-            self.prev_frame_gray, gray,
-            None, 0.5, 3, 15, 3, 5, 1.2, 0
-        )
+        flow = cv2.calcOpticalFlowFarneback(self.prev_frame_gray, gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
 
         self.prev_frame_gray = gray
         return flow
@@ -262,7 +253,7 @@ class MotionMultiScaleTracker(BaseTracker):
             return np.zeros(2)
 
         x, y, w, h = [int(v) for v in bbox]
-        roi_flow = flow[y:y+h, x:x+w]
+        roi_flow = flow[y : y + h, x : x + w]
 
         if roi_flow.size == 0:
             return np.zeros(2)
@@ -302,8 +293,7 @@ class MotionMultiScaleTracker(BaseTracker):
                     appearance_cost = 0.5
 
                 # Combined cost
-                cost_matrix[i, j] = (self.motion_weight * iou_cost +
-                                    self.appearance_weight * appearance_cost)
+                cost_matrix[i, j] = self.motion_weight * iou_cost + self.appearance_weight * appearance_cost
 
         # Hungarian algorithm
         if cost_matrix.size > 0:
@@ -408,9 +398,7 @@ class MotionMultiScaleTracker(BaseTracker):
         flow = self._current_flow
 
         # Associate detections to tracks
-        matches, unmatched_dets, unmatched_trks = self._associate_detections_to_tracks(
-            detections, features, flow
-        )
+        matches, unmatched_dets, unmatched_trks = self._associate_detections_to_tracks(detections, features, flow)
 
         # Update matched tracks
         for m in matches:
@@ -448,11 +436,7 @@ class MotionMultiScaleTracker(BaseTracker):
         self.tracks = []
         self.next_track_id = 1
         self.prev_frame_gray = None
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
-            history=self.config['detector']['motion_detection']['history'],
-            varThreshold=self.config['detector']['motion_detection']['var_threshold'],
-            detectShadows=False
-        )
+        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=self.config["detector"]["motion_detection"]["history"], varThreshold=self.config["detector"]["motion_detection"]["var_threshold"], detectShadows=False)
 
         # Call parent track_video
         return super().track_video(dataset, video_id)

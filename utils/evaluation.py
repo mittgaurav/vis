@@ -14,7 +14,7 @@ def convert_predictions_to_evaluation_format(predictions):
     """
     Convert predictions to format needed for metrics
     From: {frame_id: [(track_id, bbox, score), ...]}
-    To: {frame_id: [(track_id, bbox), ...]}
+    To:   {frame_id: [(track_id, bbox), ...]}
     """
     eval_format = {}
     for frame_id, preds in predictions.items():
@@ -55,7 +55,12 @@ def save_metrics_json(metrics, stats, output_file, model_name, video_id):
     output_file = Path(output_file)
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    all_results = {"model": model_name, "video_id": video_id, "metrics": {k: float(v) if isinstance(v, (int, float, np.number)) else v for k, v in metrics.items()}, "stats": stats}
+    all_results = {
+        "model": model_name,
+        "video_id": video_id,
+        "metrics": {k: float(v) if isinstance(v, (int, float, np.number)) else v for k, v in metrics.items()},
+        "stats": stats,
+    }
 
     with open(output_file, "w") as f:
         json.dump(all_results, f, indent=2)
@@ -66,13 +71,18 @@ def save_summary_json(all_metrics, output_file, model_name, num_videos):
     output_file = Path(output_file)
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    # Compute average metrics
+    # Compute average metrics (includes HOTA if present)
     avg_metrics = {}
     for key in all_metrics[0].keys():
         if isinstance(all_metrics[0][key], (int, float, np.number)):
             avg_metrics[key] = np.mean([m[key] for m in all_metrics])
 
-    summary = {"model": model_name, "num_videos": num_videos, "average_metrics": {k: float(v) for k, v in avg_metrics.items()}, "per_video_metrics": [{k: float(v) if isinstance(v, (int, float, np.number)) else v for k, v in m.items()} for m in all_metrics]}
+    summary = {
+        "model": model_name,
+        "num_videos": num_videos,
+        "average_metrics": {k: float(v) for k, v in avg_metrics.items()},
+        "per_video_metrics": [{k: float(v) if isinstance(v, (int, float, np.number)) else v for k, v in m.items()} for m in all_metrics],
+    }
 
     with open(output_file, "w") as f:
         json.dump(summary, f, indent=2)
@@ -80,7 +90,18 @@ def save_summary_json(all_metrics, output_file, model_name, num_videos):
     return avg_metrics
 
 
-def evaluate_and_save_video(dataset, video_id, video_name, predictions, stats, output_dir, model_name, video_idx, total_videos, visualize=False):
+def evaluate_and_save_video(
+    dataset,
+    video_id,
+    video_name,
+    predictions,
+    stats,
+    output_dir,
+    model_name,
+    video_idx,
+    total_videos,
+    visualize=False,
+):
     """
     Complete evaluation and saving for a single video
 
@@ -111,6 +132,10 @@ def evaluate_and_save_video(dataset, video_id, video_name, predictions, stats, o
     metrics = evaluate_tracking(gt_eval, pred_eval)
     format_results(metrics)
 
+    # OPTIONAL: show HOTA if available
+    if "hota" in metrics:
+        print(f"  HOTA: {metrics['hota']:.4f}")
+
     # Save results
     video_output_dir = Path(output_dir) / model_name / f"video_{video_id}"
     video_output_dir.mkdir(parents=True, exist_ok=True)
@@ -128,7 +153,7 @@ def evaluate_and_save_video(dataset, video_id, video_name, predictions, stats, o
         from utils.visualization import visualize_tracking_results
 
         vis_path = video_output_dir / "visualization.mp4"
-        print(f"Creating visualization video...")
+        print("Creating visualization video...")
         visualize_tracking_results(dataset, video_id, predictions, vis_path)
 
     print(f"Saved results to {video_output_dir}")
@@ -168,7 +193,18 @@ def run_tracker_on_dataset(dataset, tracker, output_dir, model_name, max_videos=
         predictions, stats = tracker.track_video(dataset, video_id)
 
         # Evaluate and save
-        metrics = evaluate_and_save_video(dataset, video_id, video_name, predictions, stats, output_dir, model_name, i, len(video_ids), visualize=visualize)
+        metrics = evaluate_and_save_video(
+            dataset,
+            video_id,
+            video_name,
+            predictions,
+            stats,
+            output_dir,
+            model_name,
+            i,
+            len(video_ids),
+            visualize=visualize,
+        )
 
         all_metrics.append(metrics)
 
@@ -188,10 +224,17 @@ def run_tracker_on_dataset(dataset, tracker, output_dir, model_name, max_videos=
 
 # Example usage
 if __name__ == "__main__":
-    from utils.data_loader import SMOT4SBDataset
-
     # Test conversion functions
-    dummy_predictions = {1: [(1, [100, 100, 20, 20], 0.9), (2, [200, 200, 15, 15], 0.85)], 2: [(1, [105, 105, 20, 20], 0.92), (2, [205, 205, 15, 15], 0.87)]}
+    dummy_predictions = {
+        1: [
+            (1, [100, 100, 20, 20], 0.9),
+            (2, [200, 200, 15, 15], 0.85),
+        ],
+        2: [
+            (1, [105, 105, 20, 20], 0.92),
+            (2, [205, 205, 15, 15], 0.87),
+        ],
+    }
 
     eval_format = convert_predictions_to_evaluation_format(dummy_predictions)
     print("Predictions converted to evaluation format:")

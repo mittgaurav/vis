@@ -10,10 +10,10 @@ CONFIGS=(
 #    "configs/motion_yolo_tracker.yaml"
     #"configs/motion_yolo_dino_sort.yaml"
 #    "configs/motion_multiscale_tracker.yaml"
-#    "configs/clip_sort.yaml"  # too slow
+    "configs/clip_sort.yaml"  # too slow
     "configs/dino_sort.yaml"
-    "configs/yolo12n_sort.yaml"
-    "configs/yolo11s_sort.yaml"
+    "configs/yolo_sort.yaml"
+    "configs/yolo_bytetrack.yaml"
     "configs/rfdetr_sort.yaml"
     # "configs/centertrack.yaml"  # Commented out
     # "configs/fairmot.yaml"  # Commented out

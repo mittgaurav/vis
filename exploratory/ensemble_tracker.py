@@ -2,12 +2,13 @@
 Multi-Detector Ensemble Tracker (Novel Approach 3)
 Combines YOLO + Background Subtraction + Optical Flow with weighted voting
 """
+
 import numpy as np
 import cv2
 import torch
 
 from baselines.base_tracker import BaseTracker
-from trackers.sort_tracker import Sort
+from trackers.sort import Sort
 
 
 class EnsembleTracker(BaseTracker):
@@ -17,69 +18,50 @@ class EnsembleTracker(BaseTracker):
 
     def _initialize_detector(self):
         """Initialize all detectors in the ensemble"""
-        config = self.config['detector']
+        config = self.config["detector"]
 
         self.detectors = {}
 
         # Detector 1: YOLO
-        if config['yolo']['enabled']:
+        if config["yolo"]["enabled"]:
             from ultralytics import YOLO
-            yolo_config = config['yolo']
+
+            yolo_config = config["yolo"]
             print(f"Loading YOLO: {yolo_config['model_name']}")
             yolo_model = YOLO(f"{yolo_config['model_name']}.pt")
 
             # Handle MPS (Apple Silicon) vs CUDA
-            if self.device == 'cuda' and torch.cuda.is_available():
-                yolo_model.to('cuda')
-                self.compute_device = 'cuda'
-            elif self.device == 'mps' and torch.backends.mps.is_available():
-                yolo_model.to('mps')
-                self.compute_device = 'mps'
+            if self.device == "cuda" and torch.cuda.is_available():
+                yolo_model.to("cuda")
+                self.compute_device = "cuda"
+            elif self.device == "mps" and torch.backends.mps.is_available():
+                yolo_model.to("mps")
+                self.compute_device = "mps"
             else:
-                yolo_model.to('cpu')
-                self.compute_device = 'cpu'
+                yolo_model.to("cpu")
+                self.compute_device = "cpu"
 
-            self.detectors['yolo'] = {
-                'model': yolo_model,
-                'conf_threshold': yolo_config['conf_threshold'],
-                'filter_class': yolo_config.get('filter_class', 14),
-                'weight': yolo_config['weight']
-            }
+            self.detectors["yolo"] = {"model": yolo_model, "conf_threshold": yolo_config["conf_threshold"], "filter_class": yolo_config.get("filter_class", 14), "weight": yolo_config["weight"]}
             print(f"YOLO loaded on {self.compute_device}")
 
         # Detector 2: Background Subtraction
-        if config['background_subtraction']['enabled']:
-            bg_config = config['background_subtraction']
-            bg_subtractor = cv2.createBackgroundSubtractorMOG2(
-                history=bg_config['history'],
-                varThreshold=bg_config['var_threshold'],
-                detectShadows=False
-            )
-            self.detectors['background'] = {
-                'model': bg_subtractor,
-                'min_area': bg_config['min_area'],
-                'max_area': bg_config['max_area'],
-                'weight': bg_config['weight']
-            }
+        if config["background_subtraction"]["enabled"]:
+            bg_config = config["background_subtraction"]
+            bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=bg_config["history"], varThreshold=bg_config["var_threshold"], detectShadows=False)
+            self.detectors["background"] = {"model": bg_subtractor, "min_area": bg_config["min_area"], "max_area": bg_config["max_area"], "weight": bg_config["weight"]}
             print("Background Subtraction initialized")
 
         # Detector 3: Optical Flow
-        if config['optical_flow']['enabled']:
-            flow_config = config['optical_flow']
-            self.detectors['flow'] = {
-                'method': flow_config['method'],
-                'motion_threshold': flow_config['motion_threshold'],
-                'min_area': flow_config['min_area'],
-                'max_area': flow_config['max_area'],
-                'weight': flow_config['weight']
-            }
+        if config["optical_flow"]["enabled"]:
+            flow_config = config["optical_flow"]
+            self.detectors["flow"] = {"method": flow_config["method"], "motion_threshold": flow_config["motion_threshold"], "min_area": flow_config["min_area"], "max_area": flow_config["max_area"], "weight": flow_config["weight"]}
             self.prev_frame_gray = None
             print("Optical Flow initialized")
 
         # Fusion config
-        self.fusion_method = config['fusion']['method']
-        self.nms_threshold = config['fusion']['nms_threshold']
-        self.min_detectors = config['fusion']['min_detectors']
+        self.fusion_method = config["fusion"]["method"]
+        self.nms_threshold = config["fusion"]["nms_threshold"]
+        self.min_detectors = config["fusion"]["min_detectors"]
 
         print(f"Ensemble with {len(self.detectors)} detectors initialized!")
 
@@ -87,28 +69,19 @@ class EnsembleTracker(BaseTracker):
 
     def _initialize_tracker(self):
         """Initialize SORT tracker"""
-        tracker_params = self.config['tracker']['params']
+        tracker_params = self.config["tracker"]["params"]
 
-        tracker = Sort(
-            max_age=tracker_params['max_age'],
-            min_hits=tracker_params['min_hits'],
-            iou_threshold=tracker_params['iou_threshold']
-        )
+        tracker = Sort(max_age=tracker_params["max_age"], min_hits=tracker_params["min_hits"], iou_threshold=tracker_params["iou_threshold"])
 
         return tracker
 
     def _detect_yolo(self, image):
         """Detector 1: YOLO"""
-        if 'yolo' not in self.detectors:
+        if "yolo" not in self.detectors:
             return []
 
-        yolo = self.detectors['yolo']
-        results = yolo['model'](
-            image,
-            conf=yolo['conf_threshold'],
-            device=self.compute_device,
-            verbose=False
-        )
+        yolo = self.detectors["yolo"]
+        results = yolo["model"](image, conf=yolo["conf_threshold"], device=self.compute_device, verbose=False)
 
         detections = []
         for result in results:
@@ -117,23 +90,23 @@ class EnsembleTracker(BaseTracker):
                 cls = int(box.cls[0])
                 conf = float(box.conf[0])
 
-                if cls == yolo['filter_class']:
+                if cls == yolo["filter_class"]:
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     x, y, w, h = x1, y1, x2 - x1, y2 - y1
 
                     # Weighted confidence
-                    weighted_conf = conf * yolo['weight']
-                    detections.append([x, y, w, h, weighted_conf, 'yolo'])
+                    weighted_conf = conf * yolo["weight"]
+                    detections.append([x, y, w, h, weighted_conf, "yolo"])
 
         return detections
 
     def _detect_background_subtraction(self, image):
         """Detector 2: Background Subtraction"""
-        if 'background' not in self.detectors:
+        if "background" not in self.detectors:
             return []
 
-        bg = self.detectors['background']
-        fg_mask = bg['model'].apply(image)
+        bg = self.detectors["background"]
+        fg_mask = bg["model"].apply(image)
 
         # Clean up
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
@@ -146,22 +119,22 @@ class EnsembleTracker(BaseTracker):
         detections = []
         for contour in contours:
             area = cv2.contourArea(contour)
-            if bg['min_area'] < area < bg['max_area']:
+            if bg["min_area"] < area < bg["max_area"]:
                 x, y, w, h = cv2.boundingRect(contour)
 
                 # Confidence based on area
                 conf = min(1.0, area / 1000.0)
-                weighted_conf = conf * bg['weight']
-                detections.append([x, y, w, h, weighted_conf, 'background'])
+                weighted_conf = conf * bg["weight"]
+                detections.append([x, y, w, h, weighted_conf, "background"])
 
         return detections
 
     def _detect_optical_flow(self, image):
         """Detector 3: Optical Flow"""
-        if 'flow' not in self.detectors:
+        if "flow" not in self.detectors:
             return []
 
-        flow_config = self.detectors['flow']
+        flow_config = self.detectors["flow"]
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         if self.prev_frame_gray is None:
@@ -169,16 +142,13 @@ class EnsembleTracker(BaseTracker):
             return []
 
         # Compute optical flow
-        flow = cv2.calcOpticalFlowFarneback(
-            self.prev_frame_gray, gray,
-            None, 0.5, 3, 15, 3, 5, 1.2, 0
-        )
+        flow = cv2.calcOpticalFlowFarneback(self.prev_frame_gray, gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
 
         self.prev_frame_gray = gray
 
         # Compute magnitude
         magnitude = np.sqrt(flow[:, :, 0] ** 2 + flow[:, :, 1] ** 2)
-        motion_mask = (magnitude > flow_config['motion_threshold']).astype(np.uint8) * 255
+        motion_mask = (magnitude > flow_config["motion_threshold"]).astype(np.uint8) * 255
 
         # Clean up
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
@@ -191,15 +161,15 @@ class EnsembleTracker(BaseTracker):
         detections = []
         for contour in contours:
             area = cv2.contourArea(contour)
-            if flow_config['min_area'] < area < flow_config['max_area']:
+            if flow_config["min_area"] < area < flow_config["max_area"]:
                 x, y, w, h = cv2.boundingRect(contour)
 
                 # Confidence based on flow magnitude
-                roi_magnitude = magnitude[y:y + h, x:x + w]
+                roi_magnitude = magnitude[y : y + h, x : x + w]
                 avg_magnitude = np.mean(roi_magnitude)
                 conf = min(1.0, avg_magnitude / 10.0)
-                weighted_conf = conf * flow_config['weight']
-                detections.append([x, y, w, h, weighted_conf, 'flow'])
+                weighted_conf = conf * flow_config["weight"]
+                detections.append([x, y, w, h, weighted_conf, "flow"])
 
         return detections
 
@@ -208,11 +178,11 @@ class EnsembleTracker(BaseTracker):
         if len(all_detections) == 0:
             return np.empty((0, 5))
 
-        if self.fusion_method == 'weighted_nms':
+        if self.fusion_method == "weighted_nms":
             return self._weighted_nms(all_detections)
-        elif self.fusion_method == 'voting':
+        elif self.fusion_method == "voting":
             return self._voting_fusion(all_detections)
-        elif self.fusion_method == 'union':
+        elif self.fusion_method == "union":
             return self._union_fusion(all_detections)
         else:
             return self._weighted_nms(all_detections)
@@ -296,13 +266,9 @@ class EnsembleTracker(BaseTracker):
         self.prev_frame_gray = None
 
         # Reset background subtractor
-        if 'background' in self.detectors:
-            bg_config = self.config['detector']['background_subtraction']
-            self.detectors['background']['model'] = cv2.createBackgroundSubtractorMOG2(
-                history=bg_config['history'],
-                varThreshold=bg_config['var_threshold'],
-                detectShadows=False
-            )
+        if "background" in self.detectors:
+            bg_config = self.config["detector"]["background_subtraction"]
+            self.detectors["background"]["model"] = cv2.createBackgroundSubtractorMOG2(history=bg_config["history"], varThreshold=bg_config["var_threshold"], detectShadows=False)
 
         return super().track_video(dataset, video_id)
 

@@ -3,14 +3,15 @@ Motion-Guided YOLO Tracker (Lightweight Novel Approach)
 Motion detection + Multi-scale YOLO only (no DINO, no optical flow)
 MUCH FASTER than full pipeline
 """
+
 import numpy as np
 import cv2
 import sys
 
-sys.path.append('..')
+sys.path.append("..")
 
 from baselines.base_tracker import BaseTracker
-from trackers.sort_tracker import Sort
+from trackers.sort import Sort
 
 
 class MotionYOLOTracker(BaseTracker):
@@ -25,27 +26,24 @@ class MotionYOLOTracker(BaseTracker):
 
     def _initialize_detector(self):
         """Initialize motion detection and YOLO"""
-        config = self.config['detector']
+        config = self.config["detector"]
 
         # 1. YOLO for object detection
         from ultralytics import YOLO
-        yolo_config = config['yolo']
+
+        yolo_config = config["yolo"]
         print(f"Loading YOLO: {yolo_config['model_name']}")
         self.yolo_model = YOLO(f"{yolo_config['model_name']}.pt")
         self.yolo_model.to(self.device)
-        self.yolo_scales = yolo_config['scales']
-        self.yolo_conf = yolo_config['conf_threshold']
-        self.filter_class = yolo_config.get('filter_class', 14)
+        self.yolo_scales = yolo_config["scales"]
+        self.yolo_conf = yolo_config["conf_threshold"]
+        self.filter_class = yolo_config.get("filter_class", 14)
 
         # 2. Background subtractor for motion detection
-        motion_config = config['motion_detection']
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
-            history=motion_config['history'],
-            varThreshold=motion_config['var_threshold'],
-            detectShadows=False
-        )
-        self.motion_min_area = motion_config['min_area']
-        self.motion_max_area = motion_config['max_area']
+        motion_config = config["motion_detection"]
+        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=motion_config["history"], varThreshold=motion_config["var_threshold"], detectShadows=False)
+        self.motion_min_area = motion_config["min_area"]
+        self.motion_max_area = motion_config["max_area"]
 
         print("Motion-Guided YOLO tracker initialized!")
 
@@ -53,13 +51,9 @@ class MotionYOLOTracker(BaseTracker):
 
     def _initialize_tracker(self):
         """Initialize SORT tracker"""
-        tracker_params = self.config['tracker']['params']
+        tracker_params = self.config["tracker"]["params"]
 
-        tracker = Sort(
-            max_age=tracker_params['max_age'],
-            min_hits=tracker_params['min_hits'],
-            iou_threshold=tracker_params['iou_threshold']
-        )
+        tracker = Sort(max_age=tracker_params["max_age"], min_hits=tracker_params["min_hits"], iou_threshold=tracker_params["iou_threshold"])
 
         return tracker
 
@@ -106,7 +100,7 @@ class MotionYOLOTracker(BaseTracker):
             x, y, w, h = [int(v) for v in region]
 
             # Crop region
-            crop = image[y:y + h, x:x + w]
+            crop = image[y : y + h, x : x + w]
             if crop.size == 0:
                 continue
 
@@ -205,12 +199,8 @@ class MotionYOLOTracker(BaseTracker):
         self.tracker.reset()
 
         # Reset background subtractor
-        motion_config = self.config['detector']['motion_detection']
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
-            history=motion_config['history'],
-            varThreshold=motion_config['var_threshold'],
-            detectShadows=False
-        )
+        motion_config = self.config["detector"]["motion_detection"]
+        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=motion_config["history"], varThreshold=motion_config["var_threshold"], detectShadows=False)
 
         return super().track_video(dataset, video_id)
 
