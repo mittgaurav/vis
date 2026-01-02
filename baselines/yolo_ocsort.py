@@ -44,7 +44,7 @@ if __name__ == "__main__":
     import yaml
     from utils.data_loader import SMOT4SBDataset
 
-    with open("configs/yolo12s_ocsort.yaml", "r") as f:
+    with open("configs/yolo_ocsort.yaml", "r") as f:
         config = yaml.safe_load(f)
 
     with open("configs/base_config.yaml", "r") as f:

@@ -100,12 +100,12 @@ def yolo_detect_frame(
         boxes = result.boxes
         for box in boxes:
             cls = int(box.cls[0])
-            conf = float(box.conf[0])
-
-            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-            x, y, w, h = x1, y1, x2 - x1, y2 - y1
-
             if detect_all_classes or filter_class is None or cls == filter_class:
+                conf = float(box.conf[0])
+
+                x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                x, y, w, h = x1, y1, x2 - x1, y2 - y1
+
                 detections.append([x, y, w, h, conf])
 
     if len(detections) == 0:

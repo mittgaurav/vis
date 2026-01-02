@@ -125,7 +125,7 @@ def run_per_video(config_files, output_dir, max_videos=None):
                 # MINIMAL CHANGE: include HOTA if present
                 mota = metrics.get("mota", 0)
                 precision = metrics.get("precision", 0)
-                hota = metrics.get("hota", 0)  # new metric
+                hota = metrics.get("hota", 0)
                 print(f"    ✓ {baseline_name}: " f"MOTA={mota:.4f}, " f"Precision={precision:.4f}, " f"HOTA={hota:.4f}, " f"FPS={stats['avg_fps']:.2f}")
             except Exception as e:
                 print(f"    ✗ {baseline_name} FAILED: {e}")

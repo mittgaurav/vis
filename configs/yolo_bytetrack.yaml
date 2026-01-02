@@ -19,6 +19,6 @@ tracker:
   params:
     high_thresh: 0.5         # high-confidence split
     low_thresh: 0.1          # keep low-score boxes for second stage
-    iou_threshold: 0.3       # small boxes => low IoU
+    iou_threshold: 0.4       # small boxes => low IoU
     max_age: 3               # allow short gaps
     min_hits: 2              # fast track init

@@ -40,3 +40,33 @@ class YOLOByteTrack(BaseTracker):
             self.detector_runtime_cfg,
             self.device,
         )
+
+if __name__ == "__main__":
+    import yaml
+    from utils.data_loader import SMOT4SBDataset
+
+    with open("configs/yolo_bytetrack.yaml", "r") as f:
+        config = yaml.safe_load(f)
+
+    with open("configs/base_config.yaml", "r") as f:
+        base_config = yaml.safe_load(f)
+
+    merged_config = {
+        **base_config,
+        **config,
+        "detector": config["detector"],
+        "tracker": config["tracker"],
+    }
+
+    print("Testing YOLO + OC-SORT tracker...")
+    print(f"Config: {merged_config['name']}")
+
+    tracker = YOLOByteTrack(merged_config)
+
+    dataset = SMOT4SBDataset(merged_config["data"]["root"], merged_config["data"]["annotation_file"])
+
+    video_ids = dataset.get_video_ids()[:1]
+    for video_id in video_ids:
+        predictions, stats = tracker.track_video(dataset, video_id)
+        print(f"\nProcessed video {video_id}")
+        print(f"Stats: {stats}")
