@@ -27,4 +27,3 @@ tqdm>=4.65.0
 matplotlib>=3.5.0,<4.0.0
 Pillow>=9.0.0,<10.0.0
 pyyaml>=6.0
-Ï
