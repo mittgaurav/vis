@@ -104,7 +104,11 @@ class RAFTDINOTracker(BaseTracker):
         self.motion_weight = tracker_params.get('motion_weight', 0.5)
         self.appearance_weight = tracker_params.get('appearance_weight', 0.5)
 
-        return None
+        return self
+
+    def reset(self):
+        self.tracks = []
+        self.next_track_id = 1
 
     def _compute_optical_flow(self, image):
         """Compute dense optical flow"""

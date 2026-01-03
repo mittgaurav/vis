@@ -18,8 +18,8 @@ detector:
 
   # Stage 2: Multi-Scale YOLO on motion regions
   yolo:
-    model_name: "yolo12n"
-    conf_threshold: 0.05
+    model_name: "yolo12s"
+    conf_threshold: 0.001
     scales: [1.0]
     filter_class: 14
 

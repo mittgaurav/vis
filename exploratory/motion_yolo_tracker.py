@@ -3,13 +3,8 @@ Motion-Guided YOLO Tracker (Lightweight Novel Approach)
 Motion detection + Multi-scale YOLO only (no DINO, no optical flow)
 MUCH FASTER than full pipeline
 """
-
 import numpy as np
-np.bool = bool
 import cv2
-import sys
-
-sys.path.append("..")
 
 from baselines.base_tracker import BaseTracker
 from trackers.sort import Sort
@@ -101,7 +96,7 @@ class MotionYOLOTracker(BaseTracker):
             x, y, w, h = [int(v) for v in region]
 
             # Crop region
-            crop = image[y : y + h, x : x + w]
+            crop = image[y:y+h, x:x+w]
             if crop.size == 0:
                 continue
 
@@ -197,7 +192,9 @@ class MotionYOLOTracker(BaseTracker):
 
     def track_video(self, dataset, video_id):
         """Override to reset per video"""
-        self.tracker.reset()
+        # Reset SORT tracker
+        if self.tracker is not None:
+            self.tracker.reset()
 
         # Reset background subtractor
         motion_config = self.config["detector"]["motion_detection"]

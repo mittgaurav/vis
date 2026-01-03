@@ -13,7 +13,7 @@ detector:
     max_area: 1000
 
   yolo:
-    model_name: "yolo12n"
+    model_name: "yolo12ns
     conf_threshold: 0.05  # Very low for small birds
     scales: [ 1.0, 1.5]  # Run YOLO at multiple scales
     filter_class: 14  # Birds
