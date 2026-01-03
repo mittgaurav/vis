@@ -1,5 +1,4 @@
 import numpy as np
-np.bool = bool
 from scipy.optimize import linear_sum_assignment
 
 from trackers.sort import KalmanBoxTracker, iou_batch  # reuse
@@ -108,14 +107,13 @@ class ByteTrack:
 
     def _gather_outputs(self):
         ret = []
-        i = len(self.trackers)
-        for trk in reversed(self.trackers):
-            d = trk.get_state()
-            if (trk.time_since_update < self.max_age) and (trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits):
+        for trk in self.trackers:
+            if trk.time_since_update == 0:  # Only output if matched THIS frame
+                d = trk.get_state()
                 ret.append(np.concatenate((d, [trk.id])).reshape(1, -1))
-            i -= 1
-            if trk.time_since_update > self.max_age:
-                self.trackers.pop(i)
+
+        # Remove dead trackers
+        self.trackers = [t for t in self.trackers if t.time_since_update <= self.max_age]
 
         if len(ret) > 0:
             return np.concatenate(ret)
