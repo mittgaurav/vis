@@ -1,0 +1,23 @@
+name: "motion_yolo_bytetrack"
+description: "RAFT-guided YOLO ROIs + ByteTrack"
+
+detector:
+  type: "motion_yolo_bytetrack"
+  model_name: "yolo12s"
+  conf_threshold: 0.05  # higher in ROIs
+  params:
+    filter_class: 14
+    img_size: 640
+
+motion_guided:
+  search_radius: 64
+  min_roi_dets: 3
+  full_frame_prob: 0.1
+
+tracker:
+  type: "bytetrack"
+  params:
+    high_thresh: 0.5
+    low_thresh: 0.05
+    iou_threshold: 0.25
+    max_age: 5
