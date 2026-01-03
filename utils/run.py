@@ -102,38 +102,35 @@ def run_per_video(config_files, output_dir, max_videos=None):
 
         for baseline_name, config in configs:
             print(f"\n  Running: {baseline_name}")
-            try:
-                tracker = load_tracker(config)
-                predictions, stats = tracker.track_video(dataset, video_id)
-                metrics = evaluate_and_save_video(
-                    dataset,
-                    video_id,
-                    video_name,
-                    predictions,
-                    stats,
-                    output_dir,
-                    baseline_name,
-                    video_idx,
-                    len(video_ids),
-                    visualize=config["output"].get("visualize", False),
-                )
 
-                per_video_results[video_id]["baselines"][baseline_name] = {
-                    "metrics": metrics,
-                    "stats": stats,
-                }
-                # MINIMAL CHANGE: include HOTA if present
-                mota = metrics.get("mota", 0)
-                precision = metrics.get("precision", 0)
-                hota = metrics.get("hota", 0)
-                print(f"    ✓ {baseline_name}: " f"MOTA={mota:.4f}, " f"Precision={precision:.4f}, " f"HOTA={hota:.4f}, " f"FPS={stats['avg_fps']:.2f}")
-            except Exception as e:
-                print(f"    ✗ {baseline_name} FAILED: {e}")
-                per_video_results[video_id]["baselines"][baseline_name] = {"error": str(e)}
+            tracker = load_tracker(config)
+            predictions, stats = tracker.track_video(dataset, video_id)
+            metrics = evaluate_and_save_video(
+                dataset,
+                video_id,
+                video_name,
+                predictions,
+                stats,
+                output_dir,
+                baseline_name,
+                video_idx,
+                len(video_ids),
+                visualize=config["output"].get("visualize", False),
+            )
+
+            per_video_results[video_id]["baselines"][baseline_name] = {
+                "metrics": metrics,
+                "stats": stats,
+            }
+
+            mota = metrics.get("mota", 0)
+            precision = metrics.get("precision", 0)
+            hota = metrics.get("hota", 0)
+            print(f"    ✓ {baseline_name}: " f"MOTA={mota:.4f}, " f"Precision={precision:.4f}, " f"HOTA={hota:.4f}, " f"FPS={stats['avg_fps']:.2f}")
 
         save_per_video_comparison(per_video_results[video_id], output_dir, video_id)
+        save_aggregate_results(per_video_results, output_dir, configs)
 
-    save_aggregate_results(per_video_results, output_dir, configs)
     print(f"\n{'=' * 80}")
     print("ALL BASELINES COMPLETE")
     print(f"Results saved to: {output_dir}")
@@ -162,7 +159,7 @@ def save_per_video_comparison(video_results, output_dir, video_id):
             "recall": metrics.get("recall", 0),
             "mota": metrics.get("mota", 0),
             "motp": metrics.get("motp", 0),
-            "hota": metrics.get("hota", 0),  # new
+            "hota": metrics.get("hota", 0),
             "dotd": metrics.get("dotd", float("inf")),
             "num_switches": metrics.get("num_switches", 0),
             "fps": stats.get("avg_fps", 0),

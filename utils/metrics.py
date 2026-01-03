@@ -1,11 +1,12 @@
 """
 Tracking metrics: Precision, Recall, IoU, MOTA, HOTA, DotD
-Uses motmetrics library for standard tracking metrics
+Specifically tuned for Small Multi-Object Tracking (SMOT) for birds.
 """
 
 import numpy as np
-np.bool = bool
+np.bool = bool  # Fix for older motmetrics versions
 import motmetrics as mm
+from utils.hota_trackeval import compute_hota_trackeval
 
 
 def compute_iou(bbox1, bbox2):
@@ -38,9 +39,10 @@ def compute_iou(bbox1, bbox2):
     return iou
 
 
-def compute_detection_metrics(gt_boxes, pred_boxes, iou_threshold=0.5):
+def compute_detection_metrics(gt_boxes, pred_boxes, iou_threshold=0.1):
     """
     Compute Precision, Recall, and mean IoU for detection
+    Default threshold set to 0.1 for small targets.
     """
     if len(pred_boxes) == 0:
         return 0.0, 0.0, 0.0
@@ -59,10 +61,8 @@ def compute_detection_metrics(gt_boxes, pred_boxes, iou_threshold=0.5):
     true_positives = 0
     ious = []
 
+    # Sort GT boxes by some criteria if needed, here we just iterate
     for i in range(len(gt_boxes)):
-        if len(pred_boxes) == 0:
-            break
-
         # Find best matching prediction
         best_iou = 0
         best_j = -1
@@ -86,9 +86,9 @@ def compute_detection_metrics(gt_boxes, pred_boxes, iou_threshold=0.5):
     return precision, recall, mean_iou
 
 
-def compute_tracking_metrics(gt_data, pred_data):
+def compute_tracking_metrics(gt_data, pred_data, iou_threshold=0.1):
     """
-    Compute MOTA, MOTP, and other tracking metrics using motmetrics
+    Compute MOTA, MOTP, etc. using motmetrics with a relaxed threshold for SMOT.
     """
     # Create accumulator
     acc = mm.MOTAccumulator(auto_id=True)
@@ -100,132 +100,61 @@ def compute_tracking_metrics(gt_data, pred_data):
         gt_frame = gt_data.get(frame_id, [])
         pred_frame = pred_data.get(frame_id, [])
 
-        if len(gt_frame) == 0 and len(pred_frame) == 0:
+        if not gt_frame and not pred_frame:
             continue
 
-        # Extract track IDs and boxes
         gt_ids = [item[0] for item in gt_frame]
-        gt_boxes = np.array([item[1] for item in gt_frame]) if len(gt_frame) > 0 else np.empty((0, 4))
-
+        gt_boxes = np.array([item[1] for item in gt_frame]) if gt_frame else np.empty((0, 4))
         pred_ids = [item[0] for item in pred_frame]
-        pred_boxes = np.array([item[1] for item in pred_frame]) if len(pred_frame) > 0 else np.empty((0, 4))
+        pred_boxes = np.array([item[1] for item in pred_frame]) if pred_frame else np.empty((0, 4))
 
-        # Compute distance matrix (1 - IoU)
-        if len(gt_boxes) > 0 and len(pred_boxes) > 0:
-            iou_matrix = np.zeros((len(gt_boxes), len(pred_boxes)))
-            for i, gt_box in enumerate(gt_boxes):
-                for j, pred_box in enumerate(pred_boxes):
-                    iou_matrix[i, j] = compute_iou(gt_box, pred_box)
+        # Distance matrix: 1 - IoU
+        # If IoU is below threshold, distance should be > 1 to count as a miss in motmetrics
+        dist_matrix = np.full((len(gt_boxes), len(pred_boxes)), np.nan)
+        for i, gt_box in enumerate(gt_boxes):
+            for j, pred_box in enumerate(pred_boxes):
+                iou = compute_iou(gt_box, pred_box)
+                if iou >= iou_threshold:
+                    dist_matrix[i, j] = 1.0 - iou
 
-            distance_matrix = 1 - iou_matrix
-        else:
-            distance_matrix = np.empty((len(gt_boxes), len(pred_boxes)))
+        acc.update(gt_ids, pred_ids, dist_matrix)
 
-        # Update accumulator
-        acc.update(gt_ids, pred_ids, distance_matrix)
-
-    # Compute metrics
     mh = mm.metrics.create()
     summary = mh.compute(
         acc,
-        metrics=[
-            "num_frames",
-            "mota",
-            "motp",
-            "num_switches",
-            "num_false_positives",
-            "num_misses",
-            "precision",
-            "recall",
-        ],
+        metrics=["num_frames", "mota", "motp", "num_switches", "num_false_positives", "num_misses", "precision", "recall"],
         name="tracking",
     )
-
     return summary.to_dict("records")[0] if len(summary) > 0 else {}
 
 
 def compute_dotd(gt_data, pred_data):
     """
-    Compute Distance over Time (DotD)
-    Average Euclidean distance between predicted and GT centers across all frames
+    Compute Dot Distance (DotD) - Average center distance.
+    This is often more reliable than IoU for small targets.
     """
     distances = []
-
-    # Build track correspondence
     all_frames = sorted(set(list(gt_data.keys()) + list(pred_data.keys())))
 
     for frame_id in all_frames:
-        gt_frame = gt_data.get(frame_id, [])
-        pred_frame = pred_data.get(frame_id, [])
+        gt_dict = {tid: bbox for tid, bbox in gt_data.get(frame_id, [])}
+        pred_dict = {tid: bbox for tid, bbox in pred_data.get(frame_id, [])}
 
-        if len(gt_frame) == 0 or len(pred_frame) == 0:
-            continue
-
-        # Build dictionaries for easier lookup
-        gt_dict = {track_id: bbox for track_id, bbox in gt_frame}
-        pred_dict = {track_id: bbox for track_id, bbox in pred_frame}
-
-        # For each GT track, find corresponding prediction
         for gt_id, gt_bbox in gt_dict.items():
             if gt_id in pred_dict:
                 pred_bbox = pred_dict[gt_id]
-
-                # Compute center points
-                gt_center = [gt_bbox[0] + gt_bbox[2] / 2, gt_bbox[1] + gt_bbox[3] / 2]
-                pred_center = [
-                    pred_bbox[0] + pred_bbox[2] / 2,
-                    pred_bbox[1] + pred_bbox[3] / 2,
-                ]
-
-                # Euclidean distance
-                dist = np.sqrt((gt_center[0] - pred_center[0]) ** 2 + (gt_center[1] - pred_center[1]) ** 2)
+                gt_c = [gt_bbox[0] + gt_bbox[2]/2, gt_bbox[1] + gt_bbox[3]/2]
+                pred_c = [pred_bbox[0] + pred_bbox[2]/2, pred_bbox[1] + pred_bbox[3]/2]
+                dist = np.sqrt((gt_c[0] - pred_c[0])**2 + (gt_c[1] - pred_c[1])**2)
                 distances.append(dist)
 
-    return np.mean(distances) if len(distances) > 0 else float("inf")
+    return np.mean(distances) if distances else float("inf")
 
 
-def compute_hota_approx(gt_data, pred_data, iou_threshold=0.5):
+def evaluate_tracking(gt_data, pred_data, iou_threshold=0.1):
     """
-    Approximate HOTA (Higher Order Tracking Accuracy).
-
-    Very lightweight approximation:
-    - For each frame and GT track ID, check if there is a prediction with the same ID
-      and IoU >= threshold.
-    - Count those as "correct tracking events".
-    - HOTA_approx = correct_events / total_gt_events.
-
-    This captures joint detection+association quality in a single scalar and
-    is acceptable as a simplified HOTA-style metric for coursework, as long
-    as the approximation is documented. [web:52][web:132]
+    Main evaluation entry point with relaxed defaults for small birds.
     """
-    correct_events = 0
-    total_events = 0
-
-    all_frames = sorted(set(list(gt_data.keys()) + list(pred_data.keys())))
-    for frame_id in all_frames:
-        gt_frame = gt_data.get(frame_id, [])
-        pred_frame = pred_data.get(frame_id, [])
-        if not gt_frame:
-            continue
-
-        pred_dict = {tid: bbox for tid, bbox in pred_frame}
-        for gt_id, gt_bbox in gt_frame:
-            total_events += 1
-            if gt_id in pred_dict:
-                iou = compute_iou(gt_bbox, pred_dict[gt_id])
-                if iou >= iou_threshold:
-                    correct_events += 1
-
-    if total_events == 0:
-        return 0.0
-    return correct_events / total_events
-
-
-def evaluate_tracking(gt_data, pred_data, iou_threshold=0.5):
-    """
-    Comprehensive evaluation of tracking results
-    """
-    # Compute detection metrics (frame-level)
     all_gt_boxes = []
     all_pred_boxes = []
 
@@ -235,18 +164,15 @@ def evaluate_tracking(gt_data, pred_data, iou_threshold=0.5):
             all_pred_boxes.extend([bbox for _, bbox in pred_data[frame_id]])
 
     precision, recall, mean_iou = compute_detection_metrics(all_gt_boxes, all_pred_boxes, iou_threshold)
-
-    # Compute tracking metrics (MOTA, MOTP, etc.)
-    tracking_metrics = compute_tracking_metrics(gt_data, pred_data)
-
-    # Compute DotD
+    tracking_metrics = compute_tracking_metrics(gt_data, pred_data, iou_threshold)
     dotd = compute_dotd(gt_data, pred_data)
+    try:
+        hota = compute_hota_trackeval(gt_data, pred_data)
+    except Exception as e:
+        print(f"[WARN] HOTA failed: {e}")
+        hota = 0.0
 
-    # Compute approximate HOTA
-    hota = compute_hota_approx(gt_data, pred_data, iou_threshold=iou_threshold)
-
-    # Combine all metrics
-    results = {
+    return {
         "precision": precision,
         "recall": recall,
         "mean_iou": mean_iou,
@@ -255,32 +181,12 @@ def evaluate_tracking(gt_data, pred_data, iou_threshold=0.5):
         **tracking_metrics,
     }
 
-    return results
-
-
-def format_results(metrics_dict):
-    """Format metrics for display"""
-    print("\n" + "=" * 50)
-    print("TRACKING EVALUATION RESULTS")
-    print("=" * 50)
-
-    print("\nDetection Metrics:")
-    print(f"  Precision: {metrics_dict.get('precision', 0):.4f}")
-    print(f"  Recall: {metrics_dict.get('recall', 0):.4f}")
-    print(f"  Mean IoU: {metrics_dict.get('mean_iou', 0):.4f}")
-
-    print("\nTracking Metrics:")
-    print(f"  MOTA: {metrics_dict.get('mota', 0):.4f}")
-    print(f"  MOTP: {metrics_dict.get('motp', 0):.4f}")
-    print(f"  HOTA (approx): {metrics_dict.get('hota', 0):.4f}")
-    print(f"  ID Switches: {metrics_dict.get('num_switches', 0):.0f}")
-    print(f"  False Positives: {metrics_dict.get('num_false_positives', 0):.0f}")
-    print(f"  Misses: {metrics_dict.get('num_misses', 0):.0f}")
-
-    print("\nDistance Metrics:")
-    print(f"  DotD (Distance over Time): {metrics_dict.get('dotd', float('inf')):.2f} pixels")
-
-    print("=" * 50 + "\n")
+def format_results(m):
+    print("\n" + "="*50 + "\nTRACKING RESULTS (SMOT Tuned)\n" + "="*50)
+    print(f"Precision: {m.get('precision',0):.4f} | Recall: {m.get('recall',0):.4f}")
+    print(f"MOTA: {m.get('mota',0):.4f} | HOTA (approx): {m.get('hota',0):.4f}")
+    print(f"ID Sw: {m.get('num_switches',0):.0f} | DotD: {m.get('dotd',0):.2f} px")
+    print("="*50 + "\n")
 
 
 # Example usage
