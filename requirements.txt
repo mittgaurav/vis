@@ -3,7 +3,8 @@ python==3.10
 
 numpy
 pandas
-opencv  # Mac
+# opencv  # Mac
+trackeval
 #opencv-python  # windows
 scipy>=1.7.0,<1.14.0
 
