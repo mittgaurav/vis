@@ -10,3 +10,5 @@ results_/*
 *.pt
 *.pth
 CenterTrack
+.trackeval*
+out
