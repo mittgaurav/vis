@@ -1,0 +1,26 @@
+name: "raft_yolo_bytetrack"
+description: "RAFT-guided YOLO ROIs + ByteTrack"
+
+detector:
+  type: "raft_yolo_bytetrack"
+  model_name: "yolo12s"
+  conf_threshold: 0.005    # very low for tiny birds
+  params:
+    filter_class: 14            # Detect ALL classes (birds appear as various COCO classes)
+    detect_all_classes: false
+    nms_threshold: 0.5
+    img_size: 1920
+
+motion_guided:
+  search_radius: 128          # ↑ Bigger ROIs (was 64)
+  min_roi_dets: 1             # ↓ Much lower threshold (was 3)
+  full_frame_prob: 0.05       # ↓ Less frequent fallback (was 0.1)
+  roi_conf: 0.01              # ↓ Lower ROI YOLO threshold
+
+tracker:
+  type: "bytetrack"
+  params:
+    high_thresh: 0.5
+    low_thresh: 0.05
+    iou_threshold: 0.25
+    max_age: 5

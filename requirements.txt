@@ -1,5 +1,5 @@
 # Core dependencies
-python==3.10
+# python==3.10
 
 numpy
 pandas
@@ -14,9 +14,11 @@ motmetrics>=1.2.0
 
 # Deep learning models
 ultralytics # YOLO
-pytorch
+torch
 torchvision
 open-clip-torch # CLIP
+
+# kornia  # RAFT (FaceBook for motion detection)
 
 # Optional (for other baselines)
 transformers>=4.30.0,<5.0.0  # For CLIP, Grounding DINO
@@ -24,7 +26,7 @@ transformers>=4.30.0,<5.0.0  # For CLIP, Grounding DINO
 # fairseq  # For DINO features
 
 # Utilities
-tqdm>=4.65.0
-matplotlib>=3.5.0,<4.0.0
-Pillow>=9.0.0,<10.0.0
-pyyaml>=6.0
+tqdm
+matplotlib
+Pillow
+pyyaml

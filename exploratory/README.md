@@ -33,34 +33,6 @@ Image → Motion Detection → Multi-Scale YOLO → DINO Features → Enhanced T
 python run_baseline.py --config configs/motion_multiscale_tracker.yaml --max_videos 2 --device cuda
 ```
 
----
-
-### 2. RAFT-DINO Tracker (SIMPLER, FASTER)
-**File:** `raft_dino_tracker.py`  
-**Config:** `configs/raft_dino_tracker.yaml`
-
-**Pipeline:**
-```
-Image → Dense Optical Flow → Motion Blobs → DINO Features → Appearance Matching
-        (Farneback/RAFT)     (Threshold)    (Re-ID)         (Hungarian)
-```
-
-**Key Features:**
-- Dense optical flow for motion detection
-- DINO appearance features for matching
-- Pure appearance-based tracking (no YOLO!)
-- Works well for static cameras
-
-**Why it should work:**
-✅ No dependency on YOLO (which struggles with small birds)  
-✅ Motion-based detection is fast  
-✅ Appearance features handle occlusions  
-✅ Simpler pipeline, easier to debug
-
-**Run:**
-```bash
-python run_baseline.py --config configs/raft_dino_tracker.yaml --max_videos 2 --device cuda
-```
 
 ---
 

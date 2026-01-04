@@ -12,7 +12,7 @@ CONFIGS=(
     "configs/yolo_tile_sort.yaml"
 #    "configs/motion_yolo_dino_sort.yaml"
 #    "configs/motion_multiscale_tracker.yaml"
-#    "configs/raft_dino_tracker.yaml"  # slow and poor results against changing background
+#    "configs/raft_yolo_bytetrack.yaml"  # slow and poor results
 #    "configs/ensemble_tracker.yaml"  # slow
 
     # baselines

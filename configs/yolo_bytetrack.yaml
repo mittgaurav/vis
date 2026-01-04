@@ -3,7 +3,7 @@
 name: "yolo_bytetrack"
 description: "YOLO12 + ByteTrack - strong SOTA-style tracking-by-detection baseline"
 
-`# YOLO + SORT configuration
+# YOLO + SORT configuration
 
 detector:
   type: "yolo_bytetrack"
