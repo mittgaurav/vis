@@ -128,31 +128,32 @@ unzip SMOT4SB.zip -d data/
 
 Dataset structure:
 ```
-data/SMOT4SB/
-├── phase1/
-│   └── train/  # 3840×2160 resolution videos
-├── phase2/      # 1920×1080 resolution videos (used for evaluation)
+data/
+├── phase_1/
+│   └── train/       # 3840×2160 resolution videos
+│   └── pub_test/    # 3840×2160 resolution videos
+├── phase_2/      # 1920×1080 resolution videos (used for evaluation)
 │   └── train/
+│   └── pub_test/
 ├── annotations/
-│   ├── train.json/   # Ground truth for training split
+│   └── train.json   # Ground truth for training split
 ```
 
-We have added data_ with examples on how to structure the data
-
-### Step 3: Install YOLOv12, RT-DETR (optional for custom setup)
-
-```bash
-# YOLO is installed via requirements.txt
-# For custom versions:
-pip install ultralytics>=8.0.0
-pip install rtdetr>=0.1.0
-```
+We have added data_ with examples on how to structure the data. However, as the annotations are available only for both phase_1 and phase_2 train splits together, We found it easiest to
+1. Copy entire phase_2/train content into phase_1/train
+2. Rely only on train data for the evaluation (Except for the ensemble weight training where use the phase_1 train for training and phase_2 train for evaluation)
 
 ---
 
 ## Running the Code
+### Shell script
+Choose the baselines you want to run in **run_all_baselines_per_video.sh** and then run
 
-### Quick Start: Evaluate Single Baseline
+```bash
+sh ./run_all_baselines_per_video.sh
+```
+
+### Evaluate Single Baseline
 
 ```bash
 # Evaluate YOLO Tiled + SORT (our best approach) on 5 videos
