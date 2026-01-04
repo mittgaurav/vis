@@ -14,7 +14,5 @@ tracker:
     min_hits: 1       # Output immediately
     iou_threshold: 0.01
 
-device: "cpu"
-
 debug:
   verbose: true

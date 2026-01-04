@@ -42,11 +42,13 @@ def load_tracker(config):
         # exploratory
         "motion_yolo_sort": "exploratory.motion_yolo_sort.MotionYOLOSORT",
         "yolo_tile_sort": "exploratory.yolo_tile_sort.YOLOTiledSORT",
-
-        "motion_yolo_dino_sort": "exploratory.motion_yolo_dino_sort.MotionYOLODINOTracker",
-        "raft_yolo_bytetrack": "exploratory.raft_yolo_bytetrack.RAFTYOLOByteTrack",
-        "motion_multiscale": "exploratory.motion_multiscale_tracker.MotionMultiScaleTracker",
         "ensemble": "exploratory.ensemble_tracker.EnsembleTracker",
+
+        # rejected
+        "motion_yolo_dino_sort": "exploratory.reject.motion_yolo_dino_sort.MotionYOLODINOTracker",
+        "raft_yolo_bytetrack": "exploratory.reject.raft_yolo_bytetrack.RAFTYOLOByteTrack",
+        "optical_dino_tracker": "exploratory.reject.optical_dino_tracker.OpticalDINOTracker",
+        "motion_multiscale": "exploratory.reject.motion_multiscale_tracker.MotionMultiScaleTracker",
 
         # baselines
         "motion_sort": "baselines.motion_sort.MotionSORT",

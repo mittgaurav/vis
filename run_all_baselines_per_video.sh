@@ -10,10 +10,14 @@ CONFIGS=(
     # exploratory
     "configs/motion_yolo_sort.yaml"
     "configs/yolo_tile_sort.yaml"
-#    "configs/motion_yolo_dino_sort.yaml"
-#    "configs/motion_multiscale_tracker.yaml"
-#    "configs/raft_yolo_bytetrack.yaml"  # slow and poor results
+
 #    "configs/ensemble_tracker.yaml"  # slow
+
+    # rejected
+#    "configs/motion_yolo_dino_sort.yaml"  # slow
+#    "configs/motion_multiscale_tracker.yaml"  # slow and poor results
+#    "configs/raft_yolo_bytetrack.yaml"  # slow and poor results
+#    "configs/optical_dino_tracker.yaml"  # slow and poor results
 
     # baselines
     "configs/motion_sort.yaml"
@@ -23,6 +27,7 @@ CONFIGS=(
     "configs/rtdetr_sort.yaml"
 #    "configs/dino_sort.yaml"
 
+    # tried but not evaluated
 #    "configs/clip_sort.yaml"  # too slow and requires GPU to run properly
 #    "configs/centertrack.yaml"  # Extra setup and requires GPU to run properly
 #    "configs/fairmot.yaml"  # Extra setup and requires GPU to run properly

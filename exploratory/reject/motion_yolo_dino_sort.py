@@ -4,7 +4,6 @@ Designed for small bird tracking (SMOT)
 """
 
 import numpy as np
-np.bool = bool
 import cv2
 import torch
 from scipy.optimize import linear_sum_assignment

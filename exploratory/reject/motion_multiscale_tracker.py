@@ -5,7 +5,6 @@ Combines: Motion Detection + Multi-Scale YOLO + DINO Features + Optical Flow
 
 import numpy as np
 
-np.bool = bool
 import cv2
 import torch
 from scipy.optimize import linear_sum_assignment
@@ -108,7 +107,7 @@ class MotionMultiScaleTracker(BaseTracker):
         return {"yolo": self.yolo_model, "bg_subtractor": self.bg_subtractor, "dino": self.dino_model}
 
     def _initialize_tracker(self):
-        """Initialize enhanced tracker"""
+        """Initialize enhanced tracker with SORT"""
         self.tracks = []
         self.next_track_id = 1
 
@@ -116,11 +115,12 @@ class MotionMultiScaleTracker(BaseTracker):
         self.max_age = tracker_params["max_age"]
         self.min_hits = tracker_params["min_hits"]
         self.iou_threshold = tracker_params["iou_threshold"]
-        self.use_appearance = tracker_params["use_appearance"]
+        self.use_appearance = tracker_params.get("use_appearance", True)
         self.appearance_weight = tracker_params.get("appearance_weight", 0.3)
         self.motion_weight = tracker_params.get("motion_weight", 0.7)
 
-        return None  # We manage tracks manually
+        # Return self, not None!
+        return self
 
     def _detect_motion_regions(self, image):
         """Stage 1: Detect motion regions using background subtraction"""
@@ -431,6 +431,20 @@ class MotionMultiScaleTracker(BaseTracker):
                 active_tracks.append(np.concatenate([bbox, [track.track_id]]))
 
         return np.array(active_tracks) if len(active_tracks) > 0 else np.empty((0, 5))
+
+    def reset(self):
+        """Reset tracker for new video"""
+        self.tracks = []
+        self.next_track_id = 1
+        self.prev_frame_gray = None
+
+        # Reset background subtractor
+        motion_config = self.config["detector"]["motion_detection"]
+        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
+            history=motion_config["history"],
+            varThreshold=motion_config["var_threshold"],
+            detectShadows=False
+        )
 
     def track_video(self, dataset, video_id):
         """Override to reset per video"""

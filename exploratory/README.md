@@ -182,4 +182,37 @@ This shows which components contribute most!
 
 **Discussion:** Explain why each component helps, limitations, future work
 
-Good luck! 🚀
+## Exploratory Approaches Investigated
+
+We explored several novel approaches to improve small bird tracking:
+
+1. **Motion-Guided Multi-Scale YOLO** 
+   - Motivation: Run YOLO at multiple scales on motion regions to find small objects
+   - Challenge: Running YOLO multiple times per frame (15+ sec/frame) made it impractical
+   - Learning: Multi-scale inference adds complexity without sufficient speedup
+
+2. **Tiled YOLO Detection**
+   - Motivation: Process large image in tiles to magnify small objects
+   - Result: Recall dropped to 9.6% (worse than baseline 23%)
+   - Finding: Tile boundaries cause tracking discontinuities; full-image YOLO is more effective
+
+3. **Motion + YOLO + DINO Features**
+   - Motivation: Combine motion detection, YOLO, and appearance features
+   - Challenge: DINO feature extraction too slow (10+ sec/frame)
+   - Conclusion: Feature extraction overhead not justified for this dataset
+
+4. **Optical Flow + ByteTrack**
+   - Motivation: Use RAFT optical flow to predict track positions
+   - Issue: RAFT integration problematic; Farneback flow insufficient
+   - Insight: Motion prediction requires better flow estimates than available
+
+5. **Motion-Filtered YOLO** (Best Exploratory)
+   - Motivation: Fast alternative - run YOLO once, filter by motion regions
+   - Speed: ~0.2s/frame (comparable to baseline)
+   - Results: [INSERT YOUR METRICS HERE]
+
+## Summary of Findings
+
+Despite extensive exploration, simple YOLO+SORT baseline proved most robust.
+Motion-based detection achieved higher recall (33%) but at cost of precision (0.1%).
+The fundamental limitation is YOLO's lack of specialization for tiny birds.

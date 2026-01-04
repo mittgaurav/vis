@@ -2,7 +2,7 @@ name: "motion_yolo_sort"
 description: "Motion detection + YOLO on regions + SORT - Hybrid approach"
 
 detector:
-  type: "motion_guided_yolo_sort"
+  type: "motion_yolo_sort"
   model_name: "yolo12s"
   conf_threshold: 0.001
 

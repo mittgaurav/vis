@@ -9,8 +9,8 @@ detector:
   # Detector 1: YOLO
   yolo:
     enabled: true
-    model_name: "yolo12n"
-    conf_threshold: 0.05
+    model_name: "yolo12s"
+    conf_threshold: 0.001
     filter_class: 14
     weight: 0.5  # Confidence weight in ensemble
 
@@ -20,8 +20,8 @@ detector:
     method: "MOG2"
     history: 500
     var_threshold: 16
-    min_area: 25
-    max_area: 5000
+    min_area: 50
+    max_area: 800
     weight: 0.3
 
   # Detector 3: Optical Flow
@@ -29,8 +29,8 @@ detector:
     enabled: true
     method: "farneback"
     motion_threshold: 2.0
-    min_area: 25
-    max_area: 5000
+    min_area: 50
+    max_area: 800
     weight: 0.2
 
   # Fusion parameters
@@ -42,8 +42,6 @@ detector:
 tracker:
   type: "sort"
   params:
-    max_age: 3
-    min_hits: 2
-    iou_threshold: 0.3
-
-device: "mps"
+    max_age: 10
+    min_hits: 1
+    iou_threshold: 0.01
