@@ -7,19 +7,25 @@ MAX_VIDEOS=""  # to process all
 
 # List of configs to run (only working baselines)
 CONFIGS=(
-#    "configs/motion_yolo_tracker.yaml"
-    #"configs/motion_yolo_dino_sort.yaml"
+    # exploratory
+    "configs/motion_yolo_sort.yaml"
+    "configs/yolo_tile_sort.yaml"
+#    "configs/motion_yolo_dino_sort.yaml"
 #    "configs/motion_multiscale_tracker.yaml"
-    "configs/clip_sort.yaml"  # too slow
+    "configs/raft_dino_tracker.yaml"
+#    "configs/ensemble_tracker.yaml"  # slow
 
+    # baselines
+    "configs/motion_sort.yaml"
+    "configs/yolo_sort.yaml"
+    "configs/yolo_ocsort.yaml"
+    "configs/yolo_bytetrack.yaml"
+    "configs/rfdetr_sort.yaml"
 #    "configs/dino_sort.yaml"
-#    "configs/yolo_sort.yaml"
-#    "configs/yolo_ocsort.yaml"
-#    "configs/yolo_bytetrack.yaml"
-#    "configs/rfdetr_sort.yaml"
 
-    # "configs/centertrack.yaml"  # Commented out
-    # "configs/fairmot.yaml"  # Commented out
+#    "configs/clip_sort.yaml"  # too slow
+#    "configs/centertrack.yaml"  # Extra setup and requires GPU to run properly
+#    "configs/fairmot.yaml"  # Extra setup and requires GPU to run properly
 )
 
 echo "========================================"

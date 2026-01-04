@@ -39,20 +39,25 @@ def load_tracker(config):
     detector_type = config["detector"]["type"].lower()
     # Dynamically import the correct tracker based on the detector type
     tracker_map = {
+        # exploratory
+        "motion_yolo_sort": "exploratory.motion_yolo_sort.MotionYOLOSORT",
+        "yolo_tile_sort": "exploratory.yolo_tile_sort.YOLOTiledSORT",
+        "motion_yolo_dino_sort": "exploratory.motion_yolo_dino_sort.MotionYOLODINOTracker",
+        "motion_multiscale": "exploratory.motion_multiscale_tracker.MotionMultiScaleTracker",
+        "raft_dino": "exploratory.raft_dino_tracker.RAFTDINOTracker",
+        "ensemble": "exploratory.ensemble_tracker.EnsembleTracker",
+
+        # baselines
+        "motion_sort": "baselines.motion_sort.MotionSORT",
         "yolo_sort": "baselines.yolo_sort.YOLOSORT",
         "yolo_ocsort": "baselines.yolo_ocsort.YOLOOCSORT",
         "yolo_bytetrack": "baselines.yolo_bytetrack.YOLOByteTrack",
         "rfdetr_sort": "baselines.rfdetr_sort.RFDETRSORT",
         "clip_sort": "baselines.clip_sort.CLIPSORT",
         "dino_sort": "baselines.dino_sort.DINOSORT",
-        "motion_sort": "baselines.motion_sort.MotionSORT",
+
         "centertrack": "baselines.centertrack.CenterTracker",
         "fairmot": "baselines.fairmot.FairMOTTracker",
-        "motion_yolo_tracker": "exploratory.motion_yolo_tracker.MotionYOLOTracker",
-        "motion_yolo_dino_sort": "exploratory.motion_yolo_dino_sort.MotionYOLODINOTracker",
-        "motion_multiscale": "exploratory.motion_multiscale_tracker.MotionMultiScaleTracker",
-        "raft_dino": "exploratory.raft_dino_tracker.RAFTDINOTracker",
-        "ensemble": "exploratory.ensemble_tracker.EnsembleTracker",
     }
 
     if detector_type not in tracker_map:
