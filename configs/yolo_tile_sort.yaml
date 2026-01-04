@@ -1,0 +1,21 @@
+name: "yolo_tile_sort"
+description: "YOLO12s with tile-based detection for large images"
+
+detector:
+  type: "yolo_sort"
+  model_name: "yolo12s"
+  conf_threshold: 0.001
+  tile_size: 1024              # Process 1024x1024 tiles
+  overlap: 256                 # 256px overlap between tiles
+  params:
+    filter_class: 14
+    detect_all_classes: false
+    nms_threshold: 0.3
+    img_size: 640              # Keep YOLO at 640, tile handling size
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 10
+    min_hits: 1
+    iou_threshold: 0.1

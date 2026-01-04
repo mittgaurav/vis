@@ -1,0 +1,29 @@
+name: "motion_yolo_sort"
+description: "Motion detection + YOLO on regions + SORT - Hybrid approach"
+
+detector:
+  type: "motion_guided_yolo_sort"
+  model_name: "yolo12s"
+  conf_threshold: 0.001
+
+  motion_detection:
+    history: 500              # Background model history
+    var_threshold: 16         # Motion sensitivity (higher = less sensitive)
+    min_area: 100             # Minimum motion blob size (filters noise)
+    max_area: 2000            # Maximum motion blob size
+    expand_region: 30         # Expand motion regions by this many pixels
+
+  params:
+    filter_class: null
+    detect_all_classes: true
+    nms_threshold: 0.5
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 10
+    min_hits: 1
+    iou_threshold: 0.01
+
+debug:
+  verbose: true
