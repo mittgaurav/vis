@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import time
 import numpy as np
 from tqdm import tqdm
+import psutil
 
 
 class BaseTracker(ABC):
@@ -87,6 +88,7 @@ class BaseTracker(ABC):
         predictions = {}
         frame_times = []
         total_detections = 0
+        memory_footprints = []
 
         # Get frames
         frames = list(dataset.iterate_video(video_id))
@@ -95,6 +97,8 @@ class BaseTracker(ABC):
         # Debug first frame if verbose
         if self.config.get('debug', {}).get('verbose', False):
             self._debug_first_frame(frames)
+
+        process = psutil.Process()
 
         # Process each frame
         for frame_id, image, gt_boxes, gt_ids in tqdm(
@@ -105,6 +109,7 @@ class BaseTracker(ABC):
                 disable=not self.config.get('debug', {}).get('verbose', True)
         ):
             start_time = time.time()
+            start_mem = process.memory_info().rss / 1024 ** 2  # MB before
 
             # Detect
             detections = self._detect_frame(image)
@@ -115,6 +120,12 @@ class BaseTracker(ABC):
 
             frame_time = time.time() - start_time
             frame_times.append(frame_time)
+
+            mem_use = process.memory_info().rss / 1024 ** 2  - start_mem
+            memory_footprints.append(mem_use)
+
+            process = psutil.Process()
+            memory_footprints.append(process.memory_info().rss / 1024 ** 2)  # MB
 
             # Store predictions with scores
             predictions[frame_id] = []
@@ -132,7 +143,8 @@ class BaseTracker(ABC):
             'avg_fps': 1.0 / (sum(frame_times) / len(frame_times)) if len(frame_times) > 0 else 0,
             'avg_frame_time': np.mean(frame_times) if len(frame_times) > 0 else 0,
             'total_detections': total_detections,
-            'avg_detections_per_frame': total_detections / len(frame_times) if len(frame_times) > 0 else 0
+            'avg_detections_per_frame': total_detections / len(frame_times) if len(frame_times) > 0 else 0,
+            'avg_memory_mb': np.mean(memory_footprints) if memory_footprints else 0,
         }
 
         if self.config.get('debug', {}).get('verbose', False):

@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import numpy as np
 import yaml
 import pandas as pd
 from tqdm import tqdm
@@ -42,6 +43,7 @@ def load_tracker(config):
         # exploratory
         "motion_yolo_sort": "exploratory.motion_yolo_sort.MotionYOLOSORT",
         "yolo_tile_sort": "exploratory.yolo_tile_sort.YOLOTiledSORT",
+        "yolo_tile_bytetrack": "exploratory.yolo_tile_bytetrack.YOLOTiledByteTrack",
         "ensemble": "exploratory.ensemble_tracker.EnsembleTracker",
 
         # rejected
@@ -51,6 +53,7 @@ def load_tracker(config):
         "motion_multiscale": "exploratory.reject.motion_multiscale_tracker.MotionMultiScaleTracker",
 
         # baselines
+        "yolo_sort_coco_baseline": "baselines.yolo_sort.YOLOSORT",
         "motion_sort": "baselines.motion_sort.MotionSORT",
         "yolo_sort": "baselines.yolo_sort.YOLOSORT",
         "yolo_ocsort": "baselines.yolo_ocsort.YOLOOCSORT",
@@ -59,6 +62,7 @@ def load_tracker(config):
         "clip_sort": "baselines.clip_sort.CLIPSORT",
         "dino_sort": "baselines.dino_sort.DINOSORT",
 
+        # rejected
         "centertrack": "baselines.centertrack.CenterTracker",
         "fairmot": "baselines.fairmot.FairMOTTracker",
     }
@@ -97,7 +101,7 @@ def run_per_video(config_files, output_dir, max_videos=None):
     video_ids = dataset.get_video_ids()
     if max_videos:
         video_ids = video_ids[:max_videos]
-
+    video_ids = video_ids[96:]
     print(f"Processing {len(video_ids)} videos\n")
     per_video_results = {}
 
@@ -145,6 +149,11 @@ def run_per_video(config_files, output_dir, max_videos=None):
     print(f"Results saved to: {output_dir}")
     print(f"{'=' * 80}\n")
 
+def safe_metric(value, default=0):
+    """Handle NaN/Inf in metrics"""
+    if pd.isna(value) or np.isinf(value):
+        return default
+    return value
 
 def save_per_video_comparison(video_results, output_dir, video_id):
     """Save comparison of all baselines for a single video"""
@@ -161,18 +170,19 @@ def save_per_video_comparison(video_results, output_dir, video_id):
             continue
         metrics = result["metrics"]
         stats = result["stats"]
-        # MINIMAL CHANGE: add hota to per-video CSV
+
         row = {
             "baseline": baseline_name,
             "precision": metrics.get("precision", 0),
-            "recall": metrics.get("recall", 0),
-            "mota": metrics.get("mota", 0),
-            "motp": metrics.get("motp", 0),
-            "hota": metrics.get("hota", 0),
-            "dotd": metrics.get("dotd", float("inf")),
-            "num_switches": metrics.get("num_switches", 0),
-            "fps": stats.get("avg_fps", 0),
-            "avg_detections": stats.get("avg_detections_per_frame", 0),
+            "recall": safe_metric(metrics.get("recall", 0)),
+            "mota": safe_metric(metrics.get("mota", 0), -100),
+            "motp": safe_metric(metrics.get("motp", 0)),
+            "hota": safe_metric(metrics.get("hota", 0)),
+            "dotd": safe_metric(metrics.get("dotd", float("inf")), 999),
+            "num_switches": safe_metric(metrics.get("num_switches", 0)),
+            "fps": safe_metric(stats.get("avg_fps", 0)),
+            "avg_detections": safe_metric(stats.get("avg_detections_per_frame", 0)),
+            "mem_mb": safe_metric(stats.get("avg_memory_mb", 0)),
         }
         rows.append(row)
 
@@ -230,18 +240,18 @@ def save_aggregate_results(per_video_results, output_dir, configs):
     for baseline_name, data in summary.items():
         avg_m = data["avg_metrics"]
         avg_s = data["avg_stats"]
-        # MINIMAL CHANGE: include hota in aggregate CSV
+
         row = {
             "baseline": baseline_name,
             "num_videos": data["num_videos"],
-            "precision": avg_m.get("precision", 0),
-            "recall": avg_m.get("recall", 0),
-            "mota": avg_m.get("mota", 0),
-            "motp": avg_m.get("motp", 0),
-            "hota": avg_m.get("hota", 0),  # new
-            "dotd": avg_m.get("dotd", float("inf")),
-            "num_switches": avg_m.get("num_switches", 0),
-            "fps": avg_s.get("avg_fps", 0),
+            "precision": safe_metric(avg_m.get("precision", 0)),
+            "recall": safe_metric(avg_m.get("recall", 0)),
+            "mota": safe_metric(avg_m.get("mota", 0), -100),
+            "motp": safe_metric(avg_m.get("motp", 0)),
+            "hota": safe_metric(avg_m.get("hota", 0)),
+            "dotd": safe_metric(avg_m.get("dotd", float("inf")), 999),
+            "num_switches": safe_metric(avg_m.get("num_switches", 0)),
+            "fps": safe_metric(avg_s.get("avg_fps", 0)),
         }
         rows.append(row)
 

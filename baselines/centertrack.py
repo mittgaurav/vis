@@ -8,6 +8,7 @@ np.bool = bool
 import time
 from tqdm import tqdm
 from baselines.base_tracker import BaseTracker
+import psutil
 
 # Try to import CenterTrack
 import sys
@@ -65,6 +66,7 @@ class CenterTracker(BaseTracker):
         """
         predictions = {}
         frame_times = []
+        memory_footprints = []
 
         frames = list(dataset.iterate_video(video_id))
         video_name = dataset.videos[video_id]["name"]
@@ -73,8 +75,11 @@ class CenterTracker(BaseTracker):
 
         prev_image = None
 
+        process = psutil.Process()
+
         for frame_id, image, gt_boxes, gt_ids in tqdm(frames, desc=f"Video {video_name}", unit="frame", leave=False):
             start_time = time.time()
+            start_mem = process.memory_info().rss / 1024 ** 2  # MB before
 
             if self.detector is not None:
                 # CenterTrack expects (current, previous)
@@ -85,6 +90,12 @@ class CenterTracker(BaseTracker):
 
             frame_time = time.time() - start_time
             frame_times.append(frame_time)
+
+            mem_use = process.memory_info().rss / 1024 ** 2  - start_mem
+            memory_footprints.append(mem_use)
+
+            process = psutil.Process()
+            memory_footprints.append(process.memory_info().rss / 1024 ** 2)  # MB
 
             # Collect predictions
             predictions[frame_id] = []
@@ -106,6 +117,7 @@ class CenterTracker(BaseTracker):
             "avg_frame_time": float(np.mean(frame_times)) if len(frame_times) > 0 else 0,
             "total_detections": sum(len(p) for p in predictions.values()),
             "avg_detections_per_frame": float(np.mean([len(p) for p in predictions.values()])) if len(predictions) > 0 else 0,
+            'avg_memory_mb': np.mean(memory_footprints) if memory_footprints else 0,
         }
 
         return predictions, stats
