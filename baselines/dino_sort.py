@@ -7,7 +7,6 @@ Uses DINOv2 for feature extraction and similarity-based matching
 """
 
 import numpy as np
-np.bool = bool
 import torch
 import cv2
 from baselines.base_tracker import BaseTracker

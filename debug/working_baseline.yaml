@@ -1,0 +1,31 @@
+name: "yolo_sort_corrected"
+description: "YOLO12s + SORT - CORRECTED confidence threshold for small birds"
+
+detector:
+  type: "yolo_sort"
+  model_name: "yolo12s"
+  conf_threshold: 0.005
+  params:
+    filter_class: 14           # Bird class (COCO)
+    nms_threshold: 0.5         # Looser NMS for tiny objects
+    detect_all_classes: false
+    img_size: 1920
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 10
+    min_hits: 1
+    iou_threshold: 0.01          # ← VERY LOOSE (was 0.1)
+
+device: "cpu"
+
+debug:
+  verbose: true
+  log_detections: true
+  save_debug_frames: false
+
+#  params:
+#    filter_class: null            # Detect ALL classes
+#    detect_all_classes: true
+#    nms_threshold: 0.5

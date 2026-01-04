@@ -3,22 +3,23 @@
 name: "yolo_bytetrack"
 description: "YOLO12 + ByteTrack - strong SOTA-style tracking-by-detection baseline"
 
+`# YOLO + SORT configuration
+
 detector:
   type: "yolo_bytetrack"
   model_name: "yolo12s"
-  conf_threshold: 0.002      # keep very low for tiny birds
+  conf_threshold: 0.005    # very low for tiny birds
   params:
-    filter_class: 14         # bird class (COCO)
-    nms_threshold: 0.5       # looser NMS for tiny objects
+    filter_class: 14            # Detect ALL classes (birds appear as various COCO classes)
     detect_all_classes: false
-    img_size: 640            # do NOT go lower
-    augment: false
+    nms_threshold: 0.5
+    img_size: 1920                # Large size for tiny birds
 
 tracker:
   type: "bytetrack"
   params:
-    high_thresh: 0.5         # high-confidence split
-    low_thresh: 0.05         # keep low-score boxes for second stage
-    iou_threshold: 0.4       # small boxes => low IoU
-    max_age: 3               # allow short gaps
-    min_hits: 2              # fast track init
+    max_age: 10            # allow short occlusions/missed frames
+    min_hits: 1            # quick track confirmation
+    iou_threshold: 0.001   # small boxes ⇒ low IoU
+    high_thresh: 0.08      # high-confidence split
+    low_thresh: 0.001      # keep low-score boxes for second stage

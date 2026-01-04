@@ -10,14 +10,12 @@ detector:
   params:
     filter_class: 14       # Bird class
     detect_all_classes: false
-    min_area: 150          # Avoid detecting too small objects
+    min_area: 50          # Avoid detecting too small objects
     max_area: 800          # Avoid detecting too large objects
 
 tracker:
   type: "sort"
   params:
-    max_age: 5             # Allow tracks to persist longer
+    max_age: 10             # Allow tracks to persist longer
     min_hits: 1            # Keep track initialization fast
-    iou_threshold: 0.4     # Loosen IoU threshold to reduce false positives
-
-device: "mps"              # Use GPU for better performance
+    iou_threshold: 0.01   # Loosen IoU threshold to reduce false positives
