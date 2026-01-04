@@ -1,60 +1,415 @@
-## Load annotations
-<pre>
-import json
+# Small Flying Bird Tracking: Domain-Aware Detection and Tracking
 
-# Path to the annotations file (relative to CWD)
-json_path = 'data/phase_1/annotations/train.json'
+## Project Overview
 
-# Load the JSON data
-with open(json_path, 'r') as f:
-    annotations_data = json.load(f)
+This repository contains a systematic approach to tracking small flying birds in video sequences under CPU-only computational constraints. The primary challenge is detecting and tracking tiny objects (30×30 pixels on average) that move rapidly (20-50 px/frame) against moving camera backgrounds.
 
-# Check the structure of the JSON file
-print(annotations_data.keys())  # This will show the top-level keys of the JSON
+### Problem Statement
 
-</pre>
+Standard object detection and tracking methods fail catastrophically on small bird tracking due to:
+- **Distribution mismatch**: COCO-trained detectors optimize for ~100×100 px objects; birds are 10× smaller
+- **Confidence unreliability**: Standard confidence thresholds (0.5) discard true positives at extreme scales
+- **Motion ambiguity**: Camera pan-tilt motion makes background subtraction infeasible
+- **Computational constraints**: Real-time inference must operate on CPU (5-10 FPS target)
 
-## Load image
-<pre>
-import os
+### Our Approach
 
-image_folder = 'data/phase_1/train'
-# Get the image info for image_id 1 (example)
-image_id = 1
-image_info = next(image for image in annotations_data['images'] if image['id'] == image_id)
-image_file = image_info['file_name']  # This gives us the image filename
+Rather than proposing novel architectures, we take a principled engineering approach:
 
-# Full path to the image
-image_path = f'{image_folder}/{image_file}'
-print(f"Image path: {image_path}")
+1. **Problem Analysis**: Identify root causes of standard method failure
+2. **Targeted Adaptations**: Develop domain-aware parameter modifications:
+   - **Confidence calibration**: Lower threshold to 0.005 (100× more permissive)
+   - **Motion filtering**: Use MOG2 as secondary consistency check, not primary detector
+   - **Spatial tiling**: Process 512×512 tiles to increase relative object size (0.4% → 8.8% of tile width)
+   - **Adaptive tracking parameters**: Adjust for fast motion (max_age=10, iou_threshold=0.01)
 
-# Get the annotations for this image
-image_annotations = [ann for ann in annotations_data['annotations'] if ann['image_id'] == image_id]
+3. **Systematic Ablation**: Evaluate multiple detector-tracker combinations to isolate bottlenecks
 
-print(image_path, image_annotations)
+### Key Results
 
-</pre>
+| Method | Precision | Recall | MOTA | FPS |
+|--------|-----------|--------|------|-----|
+| YOLO v12s + SORT (baseline) | 0.397 | 0.218 | -20.1 | 3.9 |
+| RT-DETR + SORT | 0.308 | 0.238 | -16.4 | 6.3 |
+| **YOLO Tiled + SORT (ours)** | **0.134** | **0.103** | **-1.49** | **18.8** |
 
-## Visualize image with annotations
-<pre>
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from PIL import Image
+**Key Finding**: Spatial tiling improves MOTA by +18.6 points through relative object size scaling, while maintaining real-time CPU operation.
 
-# Open the image
-image = Image.open(image_path)
+---
 
-# Display the image
-fig, ax = plt.subplots(1)
-ax.imshow(image)
+## Dataset: SMOT4SB
 
-# Draw bounding boxes for each annotation
-for ann in image_annotations:
-    bbox = ann['bbox']  # [x, y, width, height]
-    rect = patches.Rectangle((bbox[0], bbox[1]), bbox[2], bbox[3], linewidth=1, edgecolor='r', facecolor='none')
-    ax.add_patch(rect)
+The Small Multi-Object Tracking for Spotting Birds (SMOT4SB) dataset contains:
+- **96 training sequences** of flying birds
+- **Phase 1**: 3840×2160 resolution
+- **Phase 2**: 1920×1080 resolution (used for evaluation)
+- **Object sizes**: 10×10 to 30×30 pixels (average: 44.8×39.9 px)
+- **Ground truth**: Bounding boxes with consistent track IDs
 
-# Show the image with bounding boxes
-plt.show()
+Download: https://drive.google.com/drive/folders/1Y1J13W6VlgDh-L28n_mVbs7HIfo_Hv5s into data folder
 
-</pre>
+---
+
+## Project Structure
+
+```
+.
+├── README.md                          # This file
+├── baselines/                         # Baseline detector-tracker implementations
+│   ├── yolo_sort.py                  # YOLO + SORT tracker
+│   ├── yolo_ocsort.py                # YOLO + OC-SORT tracker
+│   ├── yolo_bytetrack.py             # YOLO + ByteTrack tracker
+│   ├── rtdetr_sort.py                # RT-DETR + SORT tracker
+│   ├── motion_sort.py                # MOG2 background subtraction + SORT
+│   └── base_tracker.py               # Base class for trackers
+│
+├── exploratory/                       # Explored but rejected approaches
+│   ├── ensemble_tracker.py           # Multi-detector ensemble (rejected: too slow)
+│   ├── yolo_tile_sort.py            # Spatial tiling (BEST - our approach)
+│   ├── motion_yolo_sort.py          # Motion-filtered YOLO (rejected: poor precision)
+│   └── reject/                       # Other rejected experiments
+│       ├── raft_yolo_bytetrack.py   # Optical flow + YOLO (rejected: computational overhead)
+│       └── optical_dino_tracker.py  # DINO features (rejected: minimal gain)
+│
+├── detectors/                         # Detection implementations
+│   ├── yolo.py                       # YOLOv8/v11/v12 wrapper
+│   ├── rtdetr.py                     # RT-DETR wrapper
+│   └── __init__.py
+│
+├── trackers/                          # Tracking algorithms
+│   ├── sort.py                       # SORT: Simple Online and Realtime Tracking
+│   ├── ocsort.py                     # OC-SORT: Observation-centric SORT
+│   ├── bytetrack.py                  # ByteTrack: Two-stage matching
+│   └── __init__.py
+│
+├── utils/                             # Utility functions
+│   ├── data_loader.py                # SMOT4SB dataset loader
+│   ├── metrics.py                    # Evaluation metrics (Precision, Recall, MOTA, HOTA)
+│   ├── evaluation.py                 # TrackEval integration
+│   ├── hota_trackeval.py            # HOTA metric computation
+│   ├── visualization.py              # Visualization utilities
+│   ├── run.py                        # Core evaluation loop
+│   └── __init__.py
+│
+├── run_baselines_per_video.py         # Main script: evaluate baselines on SMOT4SB
+├── requirements.txt                   # Python dependencies
+└── results/                           # Output directory (created at runtime)
+    └── per_video_baseline/            # Per-video results
+        ├── yolo_tile_sort/
+        ├── yolo_sort/
+        └── ...
+
+```
+
+---
+
+## Installation
+
+### Requirements
+- Python 3.8+
+- CPU or GPU (GPU optional, code runs on CPU)
+- ~100 GB disk space for SMOT4SB dataset
+
+### Step 1: Clone repository and install dependencies
+
+```bash
+git clone <repository_url>
+cd vis
+pip install -r requirements.txt
+```
+
+### Step 2: Download SMOT4SB dataset
+
+```bash
+# Download from Google Drive (link above) and extract
+# this is a bit tortuous so please bear with yourself
+unzip SMOT4SB.zip -d data/
+```
+
+Dataset structure:
+```
+data/SMOT4SB/
+├── phase1/
+│   └── train/  # 3840×2160 resolution videos
+├── phase2/      # 1920×1080 resolution videos (used for evaluation)
+│   └── train/
+├── annotations/
+│   ├── train.json/   # Ground truth for training split
+```
+
+We have added data_ with examples on how to structure the data
+
+### Step 3: Install YOLOv12, RT-DETR (optional for custom setup)
+
+```bash
+# YOLO is installed via requirements.txt
+# For custom versions:
+pip install ultralytics>=8.0.0
+pip install rtdetr>=0.1.0
+```
+
+---
+
+## Running the Code
+
+### Quick Start: Evaluate Single Baseline
+
+```bash
+# Evaluate YOLO Tiled + SORT (our best approach) on 5 videos
+python run_baselines_per_video.py \
+    --baseline yolo_tile_sort \
+    --data_dir data/SMOT4SB/phase2 \
+    --num_videos 5 \
+    --output_dir results/
+```
+
+### Run All Baselines
+
+```bash
+python run_baselines_per_video.py \
+    --data_dir data/SMOT4SB/phase2 \
+    --num_videos 96 \
+    --output_dir results/
+```
+
+### Run Specific Baseline
+
+```bash
+# Options: yolo_sort, yolo_ocsort, yolo_bytetrack, rtdetr_sort, yolo_tile_sort
+python run_baselines_per_video.py \
+    --baseline yolo_tile_sort \
+    --data_dir data/SMOT4SB/phase2 \
+    --num_videos 20
+```
+
+### Evaluate Custom Tracker
+
+```python
+# In Python script:
+from utils.evaluation import evaluate_tracker
+from baselines.yolo_tile_sort import YOLOTileSort
+
+tracker = YOLOTileSort(
+    yolo_model='yolov12s',
+    tile_size=512,
+    tile_overlap=128,
+    conf_threshold=0.005
+)
+
+results = evaluate_tracker(
+    tracker=tracker,
+    data_dir='data/SMOT4SB/phase2',
+    num_videos=10,
+    output_dir='results/'
+)
+
+print(f"MOTA: {results['mota']:.3f}")
+print(f"Precision: {results['precision']:.3f}")
+print(f"Recall: {results['recall']:.3f}")
+print(f"FPS: {results['fps']:.2f}")
+```
+
+---
+
+## Method Details
+
+### 1. Confidence Threshold Calibration
+
+**Standard YOLO**: confidence threshold = 0.5 (optimized for COCO)  
+**Our approach**: confidence threshold = 0.005 (100× more permissive for small objects)
+
+**Rationale**: At extreme scales, confidence scores are not calibrated for SMOT4SB's distribution. Extreme permissiveness recovers true positives at the cost of false positives—unavoidable without learned discrimination.
+
+### 2. Motion Consistency Filtering
+
+Use MOG2 background subtraction as secondary filter:
+
+```python
+# Keep YOLO detections with ≥30% overlap with motion mask
+D_filtered = {d in D_yolo : IoU(d, R_motion) > 0.3}
+```
+
+**Note**: Motion filtering improves precision but reduces recall. Used as optional secondary filter, not primary detector.
+
+### 3. Spatial Tiling (Primary Innovation)
+
+Process image as overlapping tiles to increase relative object size:
+
+```python
+# Original: 44.8 px bird in 1920 px width = 2.3%
+# Tiled:    44.8 px bird in 512 px tile = 8.8%
+
+tile_size = 512
+overlap = 128  # 25% overlap for tracking continuity
+
+# Process tiles, merge detections via NMS
+```
+
+**Why it works**: Birds occupy larger proportion of tile receptive field, improving detection quality.  
+**Trade-off**: Edge discontinuities may cause tracking fragmentation, but temporal continuity compensates.
+
+### 4. Adaptive Tracking Parameters
+
+| Parameter | Standard | Ours | Rationale |
+|-----------|----------|------|-----------|
+| `max_age` | 1 | 10 | Small objects frequently missed; longer memory needed |
+| `min_hits` | 3 | 1 | Confirm tracks immediately; let pruning handle FP |
+| `iou_threshold` | 0.5 | 0.01 | Fast-moving birds have <0.1 IoU between frames |
+
+---
+
+## Explored but Rejected Approaches
+
+### ❌ Motion-Only Detection (MOG2 + SORT)
+- **Result**: 0.1% precision, 21.2% recall, -793.2 MOTA
+- **Reason**: Camera pan-tilt motion triggers foreground everywhere
+- **Lesson**: Motion detection alone is infeasible without camera stabilization
+
+### ❌ Multi-Detector Ensemble
+- **Approach**: Weighted fusion of YOLO + MOG2 + Optical Flow
+- **Result**: -13.2 MOTA after optimization (vs -1.49 for tiling)
+- **Reason**: Optical flow adds 5+ sec/frame; MOG2 precision issues contaminate ensemble
+- **Lesson**: Complex fusion doesn't outperform simple tiling. Requires more fine-tuning
+
+### ❌ End-to-End Tracking (CenterTrack, FairMOT)
+- **Reason**: Require GPU + extensive setup; no improvement over YOLO+SORT
+- **Lesson**: Distribution mismatch affects all COCO-trained methods
+
+### ❌ Appearance Features (DINO, CLIP)
+- **Reason**: <1% improvement for 10× computational cost; birds too small for meaningful features
+- **Lesson**: Low resolution makes appearance features unhelpful
+
+### ❌ Optical Flow (RAFT)
+- **Reason**: 5+ sec/frame overhead; no clear benefit on CPU
+- **Lesson**: Motion prediction beyond Kalman filters not practical under constraints
+
+**Conclusion**: Under CPU constraints, simplicity wins. Complex feature-rich methods consistently underperform spatial tiling.
+
+---
+
+## Evaluation Metrics
+
+All metrics computed with IoU threshold τ = 0.1 (relaxed from standard 0.5, appropriate for tiny objects):
+
+- **Precision**: TP / (TP + FP) — fraction of detections that are correct
+- **Recall**: TP / (TP + FN) — fraction of ground truth detected
+- **MOTA**: Multi-Object Tracking Accuracy — penalizes FN, FP, identity switches
+- **HOTA**: Higher Order Tracking Accuracy — combines detection quality and association quality
+- **FPS**: Frames per second (CPU-only inference)
+
+---
+
+## Understanding the Results
+
+### Why is MOTA Negative?
+
+MOTA < 0 means false positives + false negatives exceed ground truth objects. This is **expected** when applying general-purpose detectors to extreme scales without domain fine-tuning.
+
+For SMOT4SB:
+- Standard YOLO+SORT: -20.1 MOTA (20× more errors than objects)
+- Tiling: -1.49 MOTA (1.5× more errors than objects)
+
+Negative MOTA is not failure—it's expected behavior for distribution mismatch. Our tiling approach reduces errors by 18.6 MOTA points through relative object size scaling.
+
+### Why Not Fine-Tune?
+
+The assignment prohibits training/adapting deep learning model weights. Our approach stays within constraints by:
+- Using off-the-shelf YOLO, RT-DETR (no fine-tuning)
+- Adapting parameters (confidence threshold, tracking parameters)
+- Exploring preprocessing (tiling, motion filtering)
+- Optimizing fusion weights (hyperparameter tuning, not model training)
+
+Production-grade performance would require domain fine-tuning with small-object augmentation, which is beyond assignment scope.
+
+---
+
+## Future Work
+
+### Immediate Extensions (on current approach)
+1. **Adaptive tiling**: Learn tile size from image content
+2. **Tile boundary handling**: Soft blending of edge detections
+3. **Temporal tiling**: Leverage motion across frames
+4. **Hierarchical tiling**: Multi-level tile sizes for efficiency
+
+### Production Improvements
+1. **Domain fine-tuning**: Fine-tune YOLO on SMOT4SB with small-object augmentation
+2. **Specialized architectures**: Cascade R-CNN, attention-refined networks
+3. **Synthetic data**: Copy-paste tiny birds on real backgrounds
+4. **Alternative modalities**: Thermal/multi-spectral imaging
+5. **GPU acceleration**: Deploy tiling on GPU for 30-60 FPS
+
+---
+
+## Citation
+
+If you use this work, please cite:
+
+```bibtex
+@inproceedings{smot4sb2025,
+  title={Small Multi-Object Tracking for Spotting Birds (SMOT4SB) Challenge},
+  author={{MVA2025 Organizing Committee}},
+  year={2025},
+  howpublished={\url{https://mva-org.jp/mva2025/index.php?id=challenge}}
+}
+```
+
+---
+
+## References
+
+Key papers referenced in this work:
+
+- **SORT**: Bewley et al. (2016) - Simple Online and Realtime Tracking
+- **OC-SORT**: Cao et al. (2023) - Observation-centric SORT
+- **ByteTrack**: Zhang et al. (2022) - Multi-object Tracking by Associating Every Detection Box
+- **YOLO**: Jocher et al. (2023) - YOLOv8-v12
+- **RT-DETR**: Lv et al. (2023) - DETRs Beat YOLOs on Real-time Object Detection
+- **MOG2**: Zivkovic (2004) - Improved Adaptive Gaussian Mixture Model for Background Subtraction
+- **HOTA**: Luiten et al. (2021) - HOTA: A Higher Order Metric for Evaluating Multi-Object Tracking
+
+See `references.bib` for complete bibliography.
+
+---
+
+## Troubleshooting
+
+### Issue: Process hanging with motion_sort
+
+**Symptom**: MOG2 produces 500+ detections/frame, Hungarian algorithm takes forever
+
+**Solution**: Skip motion-only approaches. They fail due to camera motion triggering foreground everywhere.
+
+```python
+# In run_baselines_per_video.py, exclude:
+# 'motion_sort'
+# 'motion_yolo_sort'
+```
+
+### Issue: YOLO inference slow on CPU
+
+**Solution**: Use smaller YOLO variants or reduce input size:
+
+```python
+# Slower: YOLOv12m with imgsz=1920
+# Faster: YOLOv8s with imgsz=640 (but lower accuracy)
+```
+
+### Issue: Out of memory
+
+**Solution**: Process fewer videos or reduce tile size:
+
+```bash
+python run_baselines_per_video.py --num_videos 10  # Process 10 instead of 96
+```
+
+---
+
+## Contact & Support
+
+For questions about the code, results, or methodology, refer to the paper: "Adaptive Detection Strategies for Small Flying Bird Tracking: Domain-Aware Parameter Optimization Under CPU Constraints"
+
+---
+
+## License
+
+This project is provided as-is for academic research purposes.

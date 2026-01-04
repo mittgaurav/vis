@@ -159,29 +159,6 @@ This shows which components contribute most!
 
 ---
 
-## Next Steps
-
-1. ✅ Run Motion-Guided Multi-Scale on 5-10 videos
-2. ✅ Compare with the best baselines (YOLO, rt-DETR, DINO)
-3. ✅ Run ablation studies
-4. ⏳ Implement RAFT-DINO and Ensemble (if time permits)
-5. ✅ Generate comparison plots for report
-6. ✅ Write up results in NeurIPS format
-
----
-
-## For Your Report
-
-**Abstract:** Mention you developed a novel multi-stage tracking approach combining motion detection, multi-scale object detection, appearance features, and optical flow.
-
-**Method Section:** Describe the 4-stage pipeline with diagram
-
-**Experiments:** Show ablation studies + comparison with baselines
-
-**Results:** Demonstrate X% improvement in MOTA, Y% reduction in ID switches
-
-**Discussion:** Explain why each component helps, limitations, future work
-
 ## Exploratory Approaches Investigated
 
 We explored several novel approaches to improve small bird tracking:
@@ -209,7 +186,6 @@ We explored several novel approaches to improve small bird tracking:
 5. **Motion-Filtered YOLO** (Best Exploratory)
    - Motivation: Fast alternative - run YOLO once, filter by motion regions
    - Speed: ~0.2s/frame (comparable to baseline)
-   - Results: [INSERT YOUR METRICS HERE]
 
 ## Summary of Findings
 
