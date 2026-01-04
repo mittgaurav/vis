@@ -5,7 +5,6 @@ Simpler and faster than Approach 1
 """
 import numpy as np
 import cv2
-np.bool = bool
 import torch
 from scipy.optimize import linear_sum_assignment
 import sys

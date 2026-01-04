@@ -190,7 +190,7 @@ This shows which components contribute most!
 ## Next Steps
 
 1. ✅ Run Motion-Guided Multi-Scale on 5-10 videos
-2. ✅ Compare with the best baselines (YOLO, RF-DETR, DINO)
+2. ✅ Compare with the best baselines (YOLO, rt-DETR, DINO)
 3. ✅ Run ablation studies
 4. ⏳ Implement RAFT-DINO and Ensemble (if time permits)
 5. ✅ Generate comparison plots for report

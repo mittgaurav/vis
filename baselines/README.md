@@ -21,10 +21,10 @@ python run_baseline.py --config configs/yolo_sort.yaml --max_videos 5
 
 ---
 
-### 2. RF-DETR + SORT ✅
+### 2. RT-DETR + SORT ✅
 **Status:** Fully implemented  
-**Config:** `configs/rfdetr_sort.yaml`  
-**File:** `baselines/rfdetr_sort.py`
+**Config:** `configs/rtdetr_sort.yaml`  
+**File:** `baselines/rtdetr_sort.py`
 
 **Description:** RT-DETR (Refined DETR) transformer-based detector + SORT
 
@@ -34,7 +34,7 @@ python run_baseline.py --config configs/yolo_sort.yaml --max_videos 5
 
 **Run:**
 ```bash
-python run_baseline.py --config configs/rfdetr_sort.yaml --max_videos 5
+python run_baseline.py --config configs/rtdetr_sort.yaml --max_videos 5
 ```
 
 ---
@@ -116,8 +116,8 @@ https://github.com/xingyizhou/CenterTrack
 # YOLO (recommended to start)
 python run_baseline.py --config configs/yolo_sort.yaml --max_videos 2
 
-# RF-DETR
-python run_baseline.py --config configs/rfdetr_sort.yaml --max_videos 2
+# rt-DETR
+python run_baseline.py --config configs/rtdetr_sort.yaml --max_videos 2
 
 # DINO
 python run_baseline.py --config configs/dino_sort.yaml --max_videos 2
@@ -143,14 +143,14 @@ python run_baseline.py --config configs/yolo_sort.yaml \
 
 ## Baseline Comparison
 
-| Baseline | Speed | Accuracy (Expected) | CPU-Friendly | Notes |
-|----------|-------|---------------------|--------------|-------|
+| Baseline       | Speed | Accuracy (Expected) | CPU-Friendly | Notes |
+|----------------|-------|---------------------|--------------|-------|
 | YOLO12n + SORT | ⚡⚡⚡ Fast | ⭐⭐ Medium | ✅ Yes | Best starting point |
 | YOLO12s + SORT | ⚡⚡ Medium | ⭐⭐⭐ Good | ✅ Yes | Balanced |
-| RF-DETR + SORT | ⚡ Slow | ⭐⭐⭐ Good | ⚠️ OK | Transformer-based |
-| CLIP + SORT | 🐌 Very Slow | ⭐ Low | ❌ No | Zero-shot, for exploration |
-| DINO + SORT | ⚡⚡ Medium | ⭐⭐ Medium | ✅ Yes | Good for static camera |
-| CenterTrack | ? | ⭐⭐⭐ Good | ? | Not implemented |
+| RT-DETR + SORT | ⚡ Slow | ⭐⭐⭐ Good | ⚠️ OK | Transformer-based |
+| CLIP + SORT    | 🐌 Very Slow | ⭐ Low | ❌ No | Zero-shot, for exploration |
+| DINO + SORT    | ⚡⚡ Medium | ⭐⭐ Medium | ✅ Yes | Good for static camera |
+| CenterTrack    | ? | ⭐⭐⭐ Good | ? | Not implemented |
 
 ---
 
@@ -186,7 +186,7 @@ results/baselines/
 │   │   ├── video_1_predictions.txt
 │   │   └── video_1_metrics.json
 │   └── summary.json
-├── rfdetr_sort/
+├── rtdetr_sort/
 └── ...
 ```
 

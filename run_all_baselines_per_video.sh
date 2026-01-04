@@ -12,7 +12,7 @@ CONFIGS=(
     "configs/yolo_tile_sort.yaml"
 #    "configs/motion_yolo_dino_sort.yaml"
 #    "configs/motion_multiscale_tracker.yaml"
-    "configs/raft_dino_tracker.yaml"
+#    "configs/raft_dino_tracker.yaml"  # slow and poor results against changing background
 #    "configs/ensemble_tracker.yaml"  # slow
 
     # baselines
@@ -20,10 +20,10 @@ CONFIGS=(
     "configs/yolo_sort.yaml"
     "configs/yolo_ocsort.yaml"
     "configs/yolo_bytetrack.yaml"
-    "configs/rfdetr_sort.yaml"
+    "configs/rtdetr_sort.yaml"
 #    "configs/dino_sort.yaml"
 
-#    "configs/clip_sort.yaml"  # too slow
+#    "configs/clip_sort.yaml"  # too slow and requires GPU to run properly
 #    "configs/centertrack.yaml"  # Extra setup and requires GPU to run properly
 #    "configs/fairmot.yaml"  # Extra setup and requires GPU to run properly
 )

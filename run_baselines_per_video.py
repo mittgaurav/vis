@@ -10,7 +10,7 @@ def main():
 Examples:
   # Run all baselines on first 5 videos
   python run_baselines_per_video.py \\
-      --configs configs/yolo_sort.yaml configs/rfdetr_sort.yaml configs/dino_sort.yaml \\
+      --configs configs/yolo_sort.yaml configs/rtdetr_sort.yaml configs/dino_sort.yaml \\
       --max_videos 5
 
   # Run on all videos

@@ -52,7 +52,7 @@ def load_tracker(config):
         "yolo_sort": "baselines.yolo_sort.YOLOSORT",
         "yolo_ocsort": "baselines.yolo_ocsort.YOLOOCSORT",
         "yolo_bytetrack": "baselines.yolo_bytetrack.YOLOByteTrack",
-        "rfdetr_sort": "baselines.rfdetr_sort.RFDETRSORT",
+        "rtdetr_sort": "baselines.rtdetr_sort.rtDETRSORT",
         "clip_sort": "baselines.clip_sort.CLIPSORT",
         "dino_sort": "baselines.dino_sort.DINOSORT",
 

@@ -1,19 +1,19 @@
 """
-RF-DETR + SORT tracker implementation
-Uses shared RF-DETR detector helpers.
+rt-DETR + SORT tracker implementation
+Uses shared rt-DETR detector helpers.
 """
 
 from baselines.base_tracker import BaseTracker
 from trackers.sort import Sort
-from detectors.rfdetr import load_rfdetr_from_config, rfdetr_detect_frame
+from detectors.rtdetr import load_rtdetr_from_config, rtdetr_detect_frame
 
 
-class RFDETRSORT(BaseTracker):
-    """RF-DETR detector + SORT tracker"""
+class rtDETRSORT(BaseTracker):
+    """rt-DETR detector + SORT tracker"""
 
     def _initialize_detector(self):
         detector_config = self.config["detector"]
-        self.detector, self.detector_runtime_cfg = load_rfdetr_from_config(detector_config, self.device)
+        self.detector, self.detector_runtime_cfg = load_rtdetr_from_config(detector_config, self.device)
         return self.detector
 
     def _initialize_tracker(self):
@@ -26,7 +26,7 @@ class RFDETRSORT(BaseTracker):
         return tracker
 
     def _detect_frame(self, image):
-        return rfdetr_detect_frame(
+        return rtdetr_detect_frame(
             self.detector,
             image,
             self.detector_runtime_cfg,

@@ -1,9 +1,9 @@
 """
-Generic RF-DETR (Ultralytics RTDETR) detector wrapper.
+Generic rt-DETR (Ultralytics RTDETR) detector wrapper.
 
 Provides:
-- load_rfdetr_from_config(detector_config, device)
-- rfdetr_detect_frame(model, image, runtime_cfg, device)
+- load_rtdetr_from_config(detector_config, device)
+- rtdetr_detect_frame(model, image, runtime_cfg, device)
 
 Returns detections as [x, y, w, h, confidence].
 """
@@ -12,9 +12,9 @@ from typing import Any, Dict
 import numpy as np
 
 
-def load_rfdetr_from_config(detector_config: Dict[str, Any], device: str):
+def load_rtdetr_from_config(detector_config: Dict[str, Any], device: str):
     """
-    Load an RF-DETR / RTDETR model given detector config and device.
+    Load an rt-DETR / RTDETR model given detector config and device.
 
     detector_config expects keys:
       - model_name: str, e.g. "rtdetr-l", "rtdetr-b"
@@ -56,19 +56,19 @@ def load_rfdetr_from_config(detector_config: Dict[str, Any], device: str):
     return model, runtime_cfg
 
 
-def rfdetr_detect_frame(
+def rtdetr_detect_frame(
     model: Any,
     image: np.ndarray,
     runtime_cfg: Dict[str, Any],
     device: str,
 ) -> np.ndarray:
     """
-    Run RF-DETR detection on a single BGR frame.
+    Run rt-DETR detection on a single BGR frame.
 
     Args:
         model: Ultralytics RTDETR model.
         image: BGR image (H, W, 3).
-        runtime_cfg: dict returned by load_rfdetr_from_config.
+        runtime_cfg: dict returned by load_rtdetr_from_config.
         device: "cpu" or "cuda:0".
 
     Returns:

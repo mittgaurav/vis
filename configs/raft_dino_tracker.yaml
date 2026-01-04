@@ -10,8 +10,8 @@ detector:
   optical_flow:
     method: "farneback"  # Options: farneback (faster), raft (more accurate)
     motion_threshold: 2.0  # Minimum flow magnitude to consider as motion
-    min_area: 25
-    max_area: 5000
+    min_area: 50
+    max_area: 800
 
   # DINO for appearance
   dino:
@@ -26,5 +26,3 @@ tracker:
     appearance_threshold: 0.6  # Cosine similarity threshold
     motion_weight: 0.5
     appearance_weight: 0.5
-
-device: "mps"
