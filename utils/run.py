@@ -45,6 +45,7 @@ def load_tracker(config):
         "rfdetr_sort": "baselines.rfdetr_sort.RFDETRSORT",
         "clip_sort": "baselines.clip_sort.CLIPSORT",
         "dino_sort": "baselines.dino_sort.DINOSORT",
+        "motion_sort": "baselines.motion_sort.MotionSORT",
         "centertrack": "baselines.centertrack.CenterTracker",
         "fairmot": "baselines.fairmot.FairMOTTracker",
         "motion_yolo_tracker": "exploratory.motion_yolo_tracker.MotionYOLOTracker",

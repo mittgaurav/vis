@@ -7,7 +7,6 @@ from pathlib import Path
 from collections import defaultdict
 import cv2
 import numpy as np
-np.bool = bool
 
 
 class SMOT4SBDataset:

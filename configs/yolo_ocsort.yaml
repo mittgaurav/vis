@@ -6,18 +6,17 @@ description: "YOLO12 + OC-SORT - motion-aware modern baseline"
 detector:
   type: "yolo_ocsort"
   model_name: "yolo12s"
-  conf_threshold: 0.002    # very low for tiny birds
+  conf_threshold: 0.005    # very low for tiny birds
   params:
-    filter_class: 14       # bird class (COCO)
-    nms_threshold: 0.5     # looser NMS for tiny objects
+    filter_class: 14            # Detect ALL classes (birds appear as various COCO classes)
     detect_all_classes: false
-    img_size: 640          # keep resolution
-    augment: false
+    nms_threshold: 0.5
+    img_size: 1920                # Large size for tiny birds
 
 tracker:
   type: "ocsort"
   params:
-    max_age: 3             # allow short occlusions/missed frames
-    min_hits: 2            # quick track confirmation
-    iou_threshold: 0.3     # small boxes ⇒ low IoU
-    lambda_dist: 0.98      # weight on IoU vs center-distance in OC-SORT cost
+    max_age: 10            # allow short occlusions/missed frames
+    min_hits: 1            # quick track confirmation
+    iou_threshold: 0.01    # small boxes ⇒ low IoU
+    lambda_dist: 0.98     # weight on IoU vs center-distance in OC-SORT cost

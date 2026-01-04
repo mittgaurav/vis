@@ -1,0 +1,20 @@
+name: "motion_sort"
+description: "Background Subtraction + SORT - Motion-based bird detection"
+
+detector:
+  type: "motion_sort"
+  params:
+    min_area: 50     # Minimum blob size
+    max_area: 800    # Maximum blob size
+
+tracker:
+  type: "sort"
+  params:
+    max_age: 10       # Allow 10 frames of disappearance
+    min_hits: 1       # Output immediately
+    iou_threshold: 0.01
+
+device: "cpu"
+
+debug:
+  verbose: true

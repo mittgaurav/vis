@@ -4,7 +4,6 @@ Specifically tuned for Small Multi-Object Tracking (SMOT) for birds.
 """
 
 import numpy as np
-np.bool = bool  # Fix for older motmetrics versions
 import motmetrics as mm
 from utils.hota_trackeval import compute_hota_trackeval
 
@@ -166,11 +165,9 @@ def evaluate_tracking(gt_data, pred_data, iou_threshold=0.1):
     precision, recall, mean_iou = compute_detection_metrics(all_gt_boxes, all_pred_boxes, iou_threshold)
     tracking_metrics = compute_tracking_metrics(gt_data, pred_data, iou_threshold)
     dotd = compute_dotd(gt_data, pred_data)
-    try:
-        hota = compute_hota_trackeval(gt_data, pred_data)
-    except Exception as e:
-        print(f"[WARN] HOTA failed: {e}")
-        hota = 0.0
+
+    hota = compute_hota_trackeval(gt_data, pred_data)
+
 
     return {
         "precision": precision,

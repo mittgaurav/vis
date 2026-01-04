@@ -4,7 +4,6 @@ Visualization utilities for bird tracking
 
 import cv2
 import numpy as np
-np.bool = bool
 from pathlib import Path
 
 

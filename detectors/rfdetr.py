@@ -10,7 +10,6 @@ Returns detections as [x, y, w, h, confidence].
 
 from typing import Any, Dict
 import numpy as np
-np.bool = bool
 
 
 def load_rfdetr_from_config(detector_config: Dict[str, Any], device: str):
