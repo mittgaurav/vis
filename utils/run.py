@@ -109,7 +109,7 @@ def run_per_video(config_files, output_dir, max_videos=None):
     video_ids = dataset.get_video_ids()
     if max_videos:
         video_ids = video_ids[:max_videos]
-    video_ids = video_ids[96:]
+
     print(f"Processing {len(video_ids)} videos\n")
     per_video_results = {}
 
