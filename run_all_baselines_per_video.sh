@@ -22,7 +22,9 @@ CONFIGS=(
 
     # baselines
     "configs/yolo_sort_coco_baseline.yaml"
-    "configs/yolo_sort_tune.yaml"
+    "configs/yolo_ocsort_coco_baseline.yaml"
+    "configs/yolo_bytetrack_coco_baseline.yaml"
+    "configs/yolo_sort_tune.yaml"  # same as yolo sort coco with only lower thresholds (no image upscale)
     "configs/motion_sort.yaml"
     "configs/yolo_sort.yaml"
     "configs/yolo_ocsort.yaml"

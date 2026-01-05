@@ -1,0 +1,23 @@
+# YOLO + SORT DEFAULT CONFIGURATION (COCO baseline)
+
+name: "yolo_bytetrack_coco_baseline"
+description: "YOLOv12s + SORT with COCO default parameters - untuned baseline"
+
+detector:
+  type: "yolo_bytetrack"
+  model_name: "yolo12s"
+  conf_threshold: 0.25          # COCO default
+  params:
+    filter_class: null           # No class filtering (default)
+    detect_all_classes: false
+    nms_threshold: 0.45         # COCO default
+    img_size: 640               # YOLO default input size
+
+tracker:
+  type: "bytetrack"
+  params:
+    max_age: 1                  # Default: strict occlusion handling
+    min_hits: 3                 # Default: requires multiple confirmations
+    iou_threshold: 0.3          # Standard IoU threshold
+    high_thresh: 0.5
+    low_thresh: 0.05

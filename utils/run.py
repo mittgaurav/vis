@@ -55,6 +55,8 @@ def load_tracker(config):
 
         # baselines
         "yolo_sort_coco_baseline": "baselines.yolo_sort.YOLOSORT",
+        "yolo_ocsort_coco_baseline": "baselines.yolo_ocsort.YOLOOCSORT",
+        "yolo_bytetrack_coco_baseline": "baselines.yolo_bytetrack.YOLOByteTrack",
         "yolo_sort_tune": "baselines.yolo_sort.YOLOSORT",
 
         "motion_sort": "baselines.motion_sort.MotionSORT",
@@ -224,8 +226,11 @@ def save_aggregate_results(per_video_results, output_dir, configs):
         avg_metrics = {}
         for key in metrics_list[0].keys():
             if isinstance(metrics_list[0][key], (int, float)):
-                values = [m[key] for m in metrics_list if key in m]
-                avg_metrics[key] = sum(values) / len(values) if values else 0
+                values = [
+                    m[key] for m in metrics_list
+                    if key in m and not pd.isna(m[key]) and not np.isinf(m[key])
+                ]
+                avg_metrics[key] = float(np.mean(values)) if values else 0.0
 
         stats_list = data["stats"]
         avg_stats = {}
