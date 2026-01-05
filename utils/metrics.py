@@ -79,8 +79,8 @@ def compute_detection_metrics(gt_boxes, pred_boxes, iou_threshold=0.1):
     false_positives = len(pred_boxes) - true_positives
     false_negatives = len(gt_boxes) - true_positives
 
-    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
-    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
+    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else np.nan
+    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else np.nan
     mean_iou = np.mean(ious) if len(ious) > 0 else 0.0
 
     return precision, recall, mean_iou
