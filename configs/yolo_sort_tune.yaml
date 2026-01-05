@@ -1,12 +1,12 @@
-name: "yolo_tile_sort"
-description: "YOLO12s with tile-based detection for large images"
+# YOLO + SORT DEFAULT CONFIGURATION (COCO baseline)
+
+name: "yolo_sort_coco_baseline"
+description: "YOLOv12s + SORT with COCO default parameters - untuned baseline"
 
 detector:
-  type: "yolo_tile_sort"
+  type: "yolo_sort"
   model_name: "yolo12s"
-  conf_threshold: 0.01
-  tile_size: 1080
-  overlap: 32                  # overlap between tiles
+  conf_threshold: 0.001          # COCO default
   params:
     filter_class: 14
     detect_all_classes: false

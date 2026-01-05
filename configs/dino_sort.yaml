@@ -18,5 +18,3 @@ tracker:
     max_age: 4        # Longer for appearance-based tracking
     min_hits: 2
     iou_threshold: 0.7
-
-device: "mps"

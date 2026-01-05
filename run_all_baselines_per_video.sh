@@ -12,6 +12,7 @@ CONFIGS=(
     "configs/motion_yolo_sort.yaml"
     "configs/yolo_tile_sort.yaml"
     "configs/yolo_tile_bytetrack.yaml"
+    "configs/rtdetr_tile_bytetrack.yaml"  # slow
 
     # rejected
 #    "configs/motion_yolo_dino_sort.yaml"  # slow
@@ -21,11 +22,13 @@ CONFIGS=(
 
     # baselines
     "configs/yolo_sort_coco_baseline.yaml"
+    "configs/yolo_sort_tune.yaml"
     "configs/motion_sort.yaml"
     "configs/yolo_sort.yaml"
     "configs/yolo_ocsort.yaml"
     "configs/yolo_bytetrack.yaml"
     "configs/rtdetr_sort.yaml"
+    "configs/rtdetr_bytetrack.yaml"
     "configs/dino_sort.yaml"
 
     # tried but not evaluated

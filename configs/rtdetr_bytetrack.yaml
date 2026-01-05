@@ -1,0 +1,21 @@
+name: "rtdetr_bytetrack"
+description: "RT-DETR (Refined DETR) + ByteTrack baseline"
+
+detector:
+  type: "rtdetr_bytetrack"
+  model_name: "rtdetr-x"
+  conf_threshold: 0.1
+  params:
+    filter_class: 14       # Bird class
+    detect_all_classes: false
+    min_area: 50
+    max_area: 800
+
+tracker:
+  type: "bytetrack"
+  params:
+    max_age: 10
+    min_hits: 1
+    iou_threshold: 0.01
+    high_thresh: 0.08
+    low_thresh: 0.001

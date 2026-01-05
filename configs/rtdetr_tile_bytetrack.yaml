@@ -1,0 +1,26 @@
+name: "rtdetr_tile_bytetrack"
+description: "RT-DETR (Refined DETR) with tile-based detection + ByteTrack for large images with small objects"
+
+detector:
+  type: "rtdetr_tile_bytetrack"
+  model_name: "rtdetr-x"           # RT-DETR model
+  conf_threshold: 0.05             # permissive for small objects
+  tile_size: 640                    # tile size
+  overlap: 32                       # overlap between tiles
+  params:
+    filter_class: 14               # bird class
+    detect_all_classes: false
+    min_area: 50                   # skip tiny detections
+    max_area: 800                  # skip huge boxes
+    merge:
+      enabled: true
+      nms_threshold: 0.5           # merge overlapping tiles
+
+tracker:
+  type: "bytetrack"
+  params:
+    max_age: 10                     # allow short occlusions/missed frames
+    min_hits: 1                     # quick track initialization
+    iou_threshold: 0.01             # low IoU for small boxes
+    high_thresh: 0.08               # first-stage detection confidence
+    low_thresh: 0.001               # keep low-score boxes for second-stage matching

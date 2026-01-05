@@ -44,6 +44,7 @@ def load_tracker(config):
         "motion_yolo_sort": "exploratory.motion_yolo_sort.MotionYOLOSORT",
         "yolo_tile_sort": "exploratory.yolo_tile_sort.YOLOTiledSORT",
         "yolo_tile_bytetrack": "exploratory.yolo_tile_bytetrack.YOLOTiledByteTrack",
+        "rtdetr_tile_bytetrack": "exploratory.rtdetr_tile_bytetrack.RTDETRTiledByteTrack",
         "ensemble": "exploratory.ensemble_tracker.EnsembleTracker",
 
         # rejected
@@ -54,11 +55,18 @@ def load_tracker(config):
 
         # baselines
         "yolo_sort_coco_baseline": "baselines.yolo_sort.YOLOSORT",
+        "yolo_sort_tune": "baselines.yolo_sort.YOLOSORT",
+
         "motion_sort": "baselines.motion_sort.MotionSORT",
+
+        # upscaled
         "yolo_sort": "baselines.yolo_sort.YOLOSORT",
         "yolo_ocsort": "baselines.yolo_ocsort.YOLOOCSORT",
         "yolo_bytetrack": "baselines.yolo_bytetrack.YOLOByteTrack",
+
         "rtdetr_sort": "baselines.rtdetr_sort.RTDETRSORT",
+        "rtdetr_bytetrack": "baselines.rtdetr_bytetrack.RTDETRByteTrack",
+
         "clip_sort": "baselines.clip_sort.CLIPSORT",
         "dino_sort": "baselines.dino_sort.DINOSORT",
 
