@@ -1,7 +1,5 @@
 """
 YOLO with tile-based detection + ByteTrack tracker
-Combines spatial tiling for better small object detection with
-ByteTrack's two-stage matching for robust association
 """
 
 import numpy as np
@@ -14,49 +12,32 @@ class YOLOTiledByteTrack(BaseTracker):
     """YOLO tile-based detection + ByteTrack tracking"""
 
     def _initialize_detector(self):
-        """Initialize YOLO with tile parameters"""
+        """Initialize YOLO"""
         detector_config = self.config["detector"]
-        self.detector, self.detector_runtime_cfg = load_yolo_from_config(
-            detector_config, self.device
-        )
+        self.detector, self.detector_runtime_cfg = load_yolo_from_config(detector_config, self.device)
 
         # Tile parameters
         self.tile_size = detector_config.get("tile_size", 512)
-        self.overlap = detector_config.get("overlap", 128)
+        self.overlap = detector_config.get("overlap", 256)  # Overlap between tiles
 
-        # Merge parameters
-        self.merge_config = detector_config.get("merge", {})
-        self.merge_enabled = self.merge_config.get("enabled", True)
-        self.merge_nms_threshold = self.merge_config.get("nms_threshold", 0.5)
-
-        print(
-            f"YOLO Tiled detector initialized: "
-            f"tile_size={self.tile_size}, overlap={self.overlap}"
-        )
+        print(f"YOLO Tiled detector: tile_size={self.tile_size}, overlap={self.overlap}")
         return self.detector
 
     def _initialize_tracker(self):
-        """Initialize ByteTrack with small-object parameters"""
+        """Initialize ByteTrack"""
         tracker_params = self.config["tracker"]["params"]
 
-        tracker = ByteTrack(
+        return ByteTrack(
             high_thresh=tracker_params.get("high_thresh", 0.5),
-            low_thresh=tracker_params.get("low_thresh", 0.05),
-            iou_threshold=tracker_params.get("iou_threshold", 0.01),
-            max_age=tracker_params.get("max_age", 10),
-            min_hits=tracker_params.get("min_hits", 1),
+            low_thresh=tracker_params.get("low_thresh", 0.1),
+            iou_threshold=tracker_params.get("iou_threshold", 0.3),
+            max_age=tracker_params.get("max_age", 30),
+            min_hits=tracker_params.get("min_hits", 3),
         )
-
-        print(
-            f"ByteTrack initialized: "
-            f"high_thresh={tracker.high_thresh}, low_thresh={tracker.low_thresh}, "
-            f"iou_threshold={tracker.iou_threshold}"
-        )
-        return tracker
 
     def _detect_frame(self, image):
         """
-        Tile-based YOLO detection with ByteTrack-compatible output
+        Detect using tile-based YOLO
 
         Returns:
             detections: (N, 5) array [x, y, w, h, confidence]
@@ -66,29 +47,24 @@ class YOLOTiledByteTrack(BaseTracker):
 
         stride = self.tile_size - self.overlap
 
-        # Process tiles
+        # Process overlapping tiles
         for y in range(0, h, stride):
             for x in range(0, w, stride):
-                # Get tile with bounds checking
                 y_end = min(y + self.tile_size, h)
                 x_end = min(x + self.tile_size, w)
 
                 tile = image[y:y_end, x:x_end]
 
                 # Run YOLO on tile
-                results = self.detector(
-                    tile,
-                    conf=self.detector_runtime_cfg['conf_threshold'],
-                    device=self.device,
-                    verbose=False
-                )
+                results = self.detector(tile, conf=self.detector_runtime_cfg['conf_threshold'],
+                                        device=self.device, verbose=False)
 
                 # Convert detections back to original image coordinates
                 for result in results:
                     for box in result.boxes:
                         x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
 
-                        # Offset by tile position
+                        # Offset tile coordinates
                         x1 += x
                         y1 += y
                         x2 += x
@@ -100,31 +76,15 @@ class YOLOTiledByteTrack(BaseTracker):
 
                         detections.append([x1, y1, width, height, conf])
 
-        # Remove duplicate detections in overlap regions via NMS
+        # NMS to remove duplicate detections from overlapping tiles
         if len(detections) > 0:
-            detections = np.array(detections)
-            if self.merge_enabled:
-                detections = self._nms(
-                    detections,
-                    iou_threshold=self.merge_nms_threshold
-                )
-        else:
-            detections = np.empty((0, 5))
+            detections = self._nms(np.array(detections), iou_threshold=0.5)
+            return detections
 
-        return detections
+        return np.empty((0, 5))
 
     def _nms(self, detections, iou_threshold=0.5):
-        """
-        Non-maximum suppression to remove duplicate detections
-        in overlap regions between tiles
-
-        Args:
-            detections: (N, 5) array [x, y, w, h, confidence]
-            iou_threshold: IoU threshold for suppression
-
-        Returns:
-            detections: (M, 5) array after NMS
-        """
+        """Non-maximum suppression for tile overlap removal"""
         if len(detections) == 0:
             return detections
 

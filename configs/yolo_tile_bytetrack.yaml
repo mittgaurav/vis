@@ -4,9 +4,9 @@ description: "YOLO12s with tile-based detection + ByteTrack for small object tra
 detector:
   type: "yolo_tile_bytetrack"
   model_name: "yolo12s"
-  conf_threshold: 0.001                # Very permissive for tiny objects
-  tile_size: 1024                      # Process 1024×1024 tiles
-  overlap: 256                         # 256-pixel overlap between tiles
+  conf_threshold: 0.01                 # Very permissive for tiny objects
+  tile_size: 1080
+  overlap: 32
   params:
     filter_class: 14                   # Detect bird class
     detect_all_classes: false
@@ -16,9 +16,8 @@ detector:
 tracker:
   type: "bytetrack"
   params:
-    max_age: 10                        # Keep unmatched tracks for 10 frames
-    min_hits: 1                        # Confirm track on first detection
-    iou_threshold: 0.1                 # Very loose matching for fast-moving objects
-    high_thresh: 0.5                   # High-confidence detections (first stage)
-    low_thresh: 0.05                   # Low-confidence detections (second stage)
-    buffer_size: 30                    # Track buffer size
+    max_age: 10            # allow short occlusions/missed frames
+    min_hits: 1            # quick track confirmation
+    iou_threshold: 0.1     # small boxes ⇒ low IoU
+    high_thresh: 0.08      # high-confidence split
+    low_thresh: 0.001      # keep low-score boxes for second stage
