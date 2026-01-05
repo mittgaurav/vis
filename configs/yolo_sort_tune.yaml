@@ -1,12 +1,12 @@
 # YOLO + SORT DEFAULT CONFIGURATION (COCO baseline)
 
-name: "yolo_sort_coco_baseline"
+name: "yolo_sort_tune"
 description: "YOLOv12s + SORT with COCO default parameters - untuned baseline"
 
 detector:
   type: "yolo_sort"
   model_name: "yolo12s"
-  conf_threshold: 0.001          # COCO default
+  conf_threshold: 0.005
   params:
     filter_class: 14
     detect_all_classes: false

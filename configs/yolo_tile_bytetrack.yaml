@@ -4,7 +4,7 @@ description: "YOLO12s with tile-based detection + ByteTrack for small object tra
 detector:
   type: "yolo_tile_bytetrack"
   model_name: "yolo12s"
-  conf_threshold: 0.01                 # Very permissive for tiny objects
+  conf_threshold: 0.005                # Very permissive for tiny objects
   tile_size: 1080
   overlap: 32
   params:
