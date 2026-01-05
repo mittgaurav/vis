@@ -40,14 +40,14 @@ CONFIGS=(
 echo "========================================"
 echo "Running all baselines per video"
 echo "Configs: ${#CONFIGS[@]}"
-echo "Max videos: $MAX_VIDEOS"
+echo "Max videos: ${MAX_VIDEOS}"
 echo "========================================"
 echo ""
 
 if [ -z "$MAX_VIDEOS" ]; then
     python run_baselines_per_video.py --configs "${CONFIGS[@]}"
 else
-    python run_baselines_per_video.py --configs "${CONFIGS[@]}" --max_videos $MAX_VIDEOS
+    python run_baselines_per_video.py --configs "${CONFIGS[@]}" --max_videos "${MAX_VIDEOS}"
 fi
 
 echo ""
