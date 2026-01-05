@@ -8,7 +8,7 @@ from trackers.sort import Sort
 from detectors.rtdetr import load_rtdetr_from_config, rtdetr_detect_frame
 
 
-class rtDETRSORT(BaseTracker):
+class RTDETRSORT(BaseTracker):
     """rt-DETR detector + SORT tracker"""
 
     def _initialize_detector(self):
