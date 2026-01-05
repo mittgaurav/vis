@@ -8,10 +8,10 @@ MAX_VIDEOS=""  # to process all
 # List of configs to run (only working baselines)
 CONFIGS=(
     # exploratory
+    "configs/ensemble_tracker.yaml"  # slow
     "configs/motion_yolo_sort.yaml"
     "configs/yolo_tile_sort.yaml"
-
-#    "configs/ensemble_tracker.yaml"  # slow
+    "configs/yolo_tile_bytetrack.yaml"
 
     # rejected
 #    "configs/motion_yolo_dino_sort.yaml"  # slow
@@ -20,12 +20,13 @@ CONFIGS=(
 #    "configs/optical_dino_tracker.yaml"  # slow and poor results
 
     # baselines
+    "configs/yolo_sort_coco_baseline.yaml"
     "configs/motion_sort.yaml"
     "configs/yolo_sort.yaml"
     "configs/yolo_ocsort.yaml"
     "configs/yolo_bytetrack.yaml"
     "configs/rtdetr_sort.yaml"
-#    "configs/dino_sort.yaml"
+    "configs/dino_sort.yaml"
 
     # tried but not evaluated
 #    "configs/clip_sort.yaml"  # too slow and requires GPU to run properly

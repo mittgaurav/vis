@@ -252,6 +252,7 @@ def save_aggregate_results(per_video_results, output_dir, configs):
             "dotd": safe_metric(avg_m.get("dotd", float("inf")), 999),
             "num_switches": safe_metric(avg_m.get("num_switches", 0)),
             "fps": safe_metric(avg_s.get("avg_fps", 0)),
+            "mem_mb": safe_metric(avg_s.get("avg_memory_mb", 0)),
         }
         rows.append(row)
 
