@@ -5,6 +5,7 @@ Specifically tuned for Small Multi-Object Tracking (SMOT) for birds.
 
 import numpy as np
 import motmetrics as mm
+from scipy.optimize import linear_sum_assignment
 from utils.hota_trackeval import compute_hota_trackeval
 
 
@@ -129,23 +130,31 @@ def compute_tracking_metrics(gt_data, pred_data, iou_threshold=0.1):
 
 def compute_dotd(gt_data, pred_data):
     """
-    Compute Dot Distance (DotD) - Average center distance.
-    This is often more reliable than IoU for small targets.
+    Dot Distance (DotD) - Average center distance.
+    Matches GT to predictions using Hungarian algorithm (minimize center distance)
     """
     distances = []
     all_frames = sorted(set(list(gt_data.keys()) + list(pred_data.keys())))
 
     for frame_id in all_frames:
-        gt_dict = {tid: bbox for tid, bbox in gt_data.get(frame_id, [])}
-        pred_dict = {tid: bbox for tid, bbox in pred_data.get(frame_id, [])}
+        gt_boxes = [bbox for _, bbox in gt_data.get(frame_id, [])]
+        pred_boxes = [bbox for _, bbox in pred_data.get(frame_id, [])]
 
-        for gt_id, gt_bbox in gt_dict.items():
-            if gt_id in pred_dict:
-                pred_bbox = pred_dict[gt_id]
-                gt_c = [gt_bbox[0] + gt_bbox[2]/2, gt_bbox[1] + gt_bbox[3]/2]
-                pred_c = [pred_bbox[0] + pred_bbox[2]/2, pred_bbox[1] + pred_bbox[3]/2]
-                dist = np.sqrt((gt_c[0] - pred_c[0])**2 + (gt_c[1] - pred_c[1])**2)
-                distances.append(dist)
+        if not gt_boxes or not pred_boxes:
+            continue
+
+        gt_centers = np.array([[b[0] + b[2]/2, b[1] + b[3]/2] for b in gt_boxes])
+        pred_centers = np.array([[b[0] + b[2]/2, b[1] + b[3]/2] for b in pred_boxes])
+
+        # Compute distance matrix (GT x Pred)
+        dist_matrix = np.linalg.norm(gt_centers[:, None, :] - pred_centers[None, :, :], axis=2)
+
+        # Hungarian assignment (min total distance)
+        gt_idx, pred_idx = linear_sum_assignment(dist_matrix)
+
+        # Record distances
+        frame_distances = dist_matrix[gt_idx, pred_idx]
+        distances.extend(frame_distances)
 
     return np.mean(distances) if distances else float("inf")
 
