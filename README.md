@@ -41,6 +41,25 @@ The Small Multi-Object Tracking for Spotting Birds (SMOT4SB) dataset contains:
 
 Download: https://drive.google.com/drive/folders/1Y1J13W6VlgDh-L28n_mVbs7HIfo_Hv5s into data folder
 
+Or use the shared script
+Setup (one-time):
+
+1. Go to Google Cloud Console
+
+2. Create project → Enable Drive API → Create credentials (OAuth 2.0)
+
+3. Download credentials.json
+
+```bash
+pip install google-api-python-client google-auth-oauthlib google-auth-httplib2 tqdm
+```
+Run
+```bash
+python download_vis_phase1.py
+```
+
+Put data in data/ as shown in the below structure.
+
 ---
 
 ## Project Structure
@@ -89,6 +108,16 @@ Download: https://drive.google.com/drive/folders/1Y1J13W6VlgDh-L28n_mVbs7HIfo_Hv
 │   ├── run.py                        # Core evaluation loop
 │   └── __init__.py
 │
+├── data/                             # data
+│   ├── annotations/
+│   ├── phase_1/
+│   │   └── train/
+│   │       └── 0001/
+│   │           └── 0001.jpg # and so on
+│   └── phase_2/
+│       └── train/
+│           └── 0001/
+│               └── 0001.jpg # and so on│
 ├── debug/                             # debug and visualization functions
 │   ├── result_plots.py                # plot results
 │   ├── *.py
