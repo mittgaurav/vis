@@ -239,6 +239,18 @@ print(f"Precision: {results['precision']:.3f}")
 print(f"Recall: {results['recall']:.3f}")
 print(f"FPS: {results['fps']:.2f}")
 ```
+---
+
+## Generate results
+all results are stored in results/ folder
+
+Aggregated results are stored in results/per_video_baseline/aggregate_results/aggregate_summary.json
+
+To see the final table
+```bash
+python -m utils.get_results_df
+```
+
 
 ---
 
