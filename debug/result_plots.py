@@ -17,77 +17,153 @@ data = [
     ["motion_yolo_sort", 5.6, 1600, 0.008, 0.122, -143, 0.005, 1000, np.nan, np.nan, 0.22],
 ]
 
+
 cols = ["name", "fps", "mem_mb", "precision", "recall",
         "mota", "hota", "dotd", "id_switches", "motp", "iou"]
 
 df = pd.DataFrame(data, columns=cols)
 
+data = [
+    # name, label, fps, precision, recall, f1, hota
+    ("yolo_sort_coco", "YOLO+SORT (COCO)", 11.8, 0.392, 0.055, 0.096, 0.016),
+    ("yolo_sort_tune", "YOLO-DA", 8.96, 0.171, 0.233, 0.197, 0.0625),
+    ("yolo_sort", "YOLO-DA (res)", 1.216, 0.239, 0.243, 0.241, 0.0618),
+    ("rtdetr_sort", "RT-DETR", 1.29, 0.284, 0.293, 0.288, 0.042),
+    ("motion_sort", "MOG2", 15.9, 0.001, 0.70, 0.002, 0.0015),
+    ("dino_sort", "DINO", 34.13, 0.001, 0.80, 0.002, 0.001),
+    ("yolo_tile_bytetrack", "YOLO-DAST", 2.48, 0.264, 0.372, 0.308, 0.112),
+    ("rtdetr_tile_bytetrack", "RTDETR-DAST", 1.08, 0.01, 0.90, 0.018, 0.125),
+    ("ensemble_tracker", "Ensemble", 2.71, 0.01, 0.70, 0.02, np.nan),
+    ("motion_yolo_sort", "MOG2 + YOLO", 5.6, 0.008, 0.122, 0.015, 0.005),
+]
+
+df = pd.DataFrame(
+    data,
+    columns=["id", "label", "fps", "precision", "recall", "f1", "hota"]
+)
+
 
 #################################
 ## FPS v HOTA
-#################################
-plt.figure(figsize=(6,5))
-plt.scatter(df["fps"], df["hota"], s=80)
-
-for i, name in enumerate(df["name"]):
-    plt.text(df["fps"][i]*1.05, df["hota"][i], name, fontsize=8)
-
-plt.xscale("log")
-plt.xlabel("FPS (log scale)")
-plt.ylabel("HOTA")
-plt.title("Accuracy–Speed Trade-off")
-plt.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.show()
-
-
-#################################
-## Precision v Recall
+## Pereto line
 #################################
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Assume df has numeric precision, recall in [0,1]
-fig, ax = plt.subplots(figsize=(7,6))
+plt.figure(figsize=(7, 6))
 
-# Scatter
-scatter = ax.scatter(
-    df["recall"],
-    df["precision"],
-    s=df["fps"] * 20,
-    alpha=0.75,
-    edgecolor="k"
+# Scatter all points
+for _, r in df.dropna(subset=["hota"]).iterrows():
+    plt.scatter(r["fps"], r["hota"], s=80, color="tab:blue")
+    plt.text(r["fps"] * 1.05, r["hota"] + 0.002, r["label"], fontsize=9)
+
+# ---- Compute Pareto frontier ----
+pts = df.dropna(subset=["hota"])[["fps", "hota"]].values
+pts = pts[pts[:, 0].argsort()]  # sort by FPS
+
+frontier = []
+max_hota = -np.inf
+for fps, hota in pts[::-1]:  # iterate from slowest → fastest
+    if hota > max_hota:
+        frontier.append((fps, hota))
+        max_hota = hota
+
+frontier = np.array(frontier)
+
+# Plot frontier
+plt.plot(
+    frontier[:, 0],
+    frontier[:, 1],
+    color="black",
+    linewidth=2,
+    label="Pareto frontier"
 )
 
-# Label points
-for i, name in enumerate(df["name"]):
-    ax.text(df["recall"][i] + 0.004,
-            df["precision"][i] + 0.004,
-            name,
-            fontsize=8)
-
-# ---- F1 iso-curves ----
-r = np.linspace(0.001, 1.0, 500)
-for f1 in [0.05, 0.1, 0.2, 0.3]:
-    p = (f1 * r) / (2*r - f1)
-    p[p < 0] = np.nan
-    ax.plot(r, p, "--", color="gray", alpha=0.6)
-    ax.text(0.85, (f1*0.85)/(2*0.85-f1),
-            f"F1={f1}",
-            fontsize=8, color="gray")
-
 # Highlight YOUR method
-row = df[df["name"] == "yolo_tile_bytetrack"].iloc[0]
-ax.scatter(row["recall"], row["precision"],
-           s=300, marker="*", color="red", edgecolor="k", zorder=5)
-ax.annotate(
-    "Only method with\nusable Precision & Recall",
-    (row["recall"], row["precision"]),
-    xytext=(row["recall"]-0.25, row["precision"]+0.15),
+row = df[df["id"] == "yolo_tile_bytetrack"].iloc[0]
+plt.scatter(row["fps"], row["hota"],
+            s=300, marker="*", color="crimson", edgecolor="k", zorder=5)
+plt.annotate(
+    "YOLO-DAST\n(on Pareto frontier)",
+    (row["fps"], row["hota"]),
+    xytext=(row["fps"] * 2, row["hota"] - 0.015),
     arrowprops=dict(arrowstyle="->", lw=1.5),
     fontsize=10
 )
 
+plt.xscale("log")
+plt.xlabel("FPS (log scale)")
+plt.ylabel("HOTA")
+plt.title("HOTA vs FPS Trade-off (Pareto Frontier)")
+plt.grid(True, which="both", linestyle="--", alpha=0.5)
+plt.tight_layout()
+plt.show()
+
+#################################
+## Precision v Recall
+#################################
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(7, 6))
+
+# ---- Scatter points ----
+ax.scatter(
+    df["recall"],
+    df["precision"],
+    s=df["fps"] * 18,          # size ~ speed
+    alpha=0.7,
+    edgecolor="k",
+    color="tab:blue"
+)
+
+# ---- Label points (except highlighted one) ----
+for _, r in df.iterrows():
+    if r["id"] == "yolo_tile_bytetrack":
+        continue
+    ax.text(
+        r["recall"] + 0.005,
+        r["precision"] + 0.005,
+        r["label"],
+        fontsize=8
+    )
+
+# ---- F1 iso-curves ----
+recall = np.linspace(0.001, 1.0, 500)
+for f1 in [0.05, 0.1, 0.2, 0.3]:
+    precision = (f1 * recall) / (2 * recall - f1)
+    precision[precision < 0] = np.nan
+    ax.plot(recall, precision, "--", color="gray", alpha=0.5)
+    ax.text(
+        0.88,
+        (f1 * 0.88) / (2 * 0.88 - f1),
+        f"F1={f1}",
+        fontsize=8,
+        color="gray"
+    )
+
+# ---- Highlight YOUR method ----
+row = df[df["id"] == "yolo_tile_bytetrack"].iloc[0]
+
+ax.scatter(
+    row["recall"],
+    row["precision"],
+    s=350,
+    marker="*",
+    color="crimson",
+    edgecolor="k",
+    zorder=6
+)
+
+ax.annotate(
+    "YOLO-DAST\n(best PR balance)",
+    xy=(row["recall"], row["precision"]),
+    xytext=(row["recall"] - 0.28, row["precision"] + 0.18),
+    arrowprops=dict(arrowstyle="->", lw=1.5),
+    fontsize=10,
+    fontweight="bold"
+)
+
+# ---- Axes & formatting ----
 ax.set_xlabel("Recall")
 ax.set_ylabel("Precision")
 ax.set_xlim(0, 1)
@@ -95,6 +171,41 @@ ax.set_ylim(0, 1)
 ax.set_title("Precision–Recall Trade-off with F1 Iso-curves")
 ax.grid(True, alpha=0.3)
 
+plt.tight_layout()
+plt.show()
+
+
+#################################
+## detection bottleneck: recall vs hota
+#################################
+plt.figure(figsize=(7, 6))
+
+for _, r in df.dropna(subset=["hota"]).iterrows():
+    plt.scatter(r["recall"], r["hota"], s=80)
+    plt.text(r["recall"] + 0.005, r["hota"] + 0.002, r["label"], fontsize=9)
+
+plt.xlabel("Recall")
+plt.ylabel("HOTA")
+plt.title("Recall vs HOTA (Detection Bottleneck)")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+
+#################################
+## F1 vs FPS
+#################################
+plt.figure(figsize=(7, 6))
+
+for _, r in df.iterrows():
+    plt.scatter(r["fps"], r["f1"], s=80)
+    plt.text(r["fps"] * 1.02, r["f1"] + 0.005, r["label"], fontsize=9)
+
+plt.xscale("log")
+plt.xlabel("FPS (log scale)")
+plt.ylabel("F1 score")
+plt.title("F1 vs FPS")
+plt.grid(True, which="both", linestyle="--", alpha=0.5)
 plt.tight_layout()
 plt.show()
 

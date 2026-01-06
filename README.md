@@ -26,14 +26,7 @@ Rather than proposing novel architectures, we take a principled engineering appr
 3. **Systematic Ablation**: Evaluate multiple detector-tracker combinations to isolate bottlenecks
 
 ### Key Results
-
-| Method | Precision | Recall | MOTA | FPS |
-|--------|-----------|--------|------|-----|
-| YOLO v12s + SORT (baseline) | 0.397 | 0.218 | -20.1 | 3.9 |
-| RT-DETR + SORT | 0.308 | 0.238 | -16.4 | 6.3 |
-| **YOLO Tiled + SORT (ours)** | **0.134** | **0.103** | **-1.49** | **18.8** |
-
-**Key Finding**: Spatial tiling improves MOTA by +18.6 points through relative object size scaling, while maintaining real-time CPU operation.
+**Key Finding**: Spatial tiling improves MOTA through relative object size scaling, while maintaining real-time CPU operation.
 
 ---
 
@@ -55,6 +48,11 @@ Download: https://drive.google.com/drive/folders/1Y1J13W6VlgDh-L28n_mVbs7HIfo_Hv
 ```
 .
 ├── README.md                          # This file
+├── requirements.txt                   # Python dependencies
+├── run_baselines_per_video.py         # Main script: evaluate baselines on SMOT4SB
+├── figures/                          # Result figures
+│   └── *.png
+│
 ├── baselines/                         # Baseline detector-tracker implementations
 │   ├── yolo_sort.py                  # YOLO + SORT tracker
 │   ├── yolo_ocsort.py                # YOLO + OC-SORT tracker
@@ -91,8 +89,11 @@ Download: https://drive.google.com/drive/folders/1Y1J13W6VlgDh-L28n_mVbs7HIfo_Hv
 │   ├── run.py                        # Core evaluation loop
 │   └── __init__.py
 │
-├── run_baselines_per_video.py         # Main script: evaluate baselines on SMOT4SB
-├── requirements.txt                   # Python dependencies
+├── debug/                             # debug and visualization functions
+│   ├── result_plots.py                # plot results
+│   ├── *.py
+│   └── __init__.py
+│
 └── results/                           # Output directory (created at runtime)
     └── per_video_baseline/            # Per-video results
         ├── yolo_tile_sort/
@@ -106,7 +107,7 @@ Download: https://drive.google.com/drive/folders/1Y1J13W6VlgDh-L28n_mVbs7HIfo_Hv
 ## Installation
 
 ### Requirements
-- Python 3.8+
+- Python 3.8+ (preferrably 3.10)
 - CPU or GPU (GPU optional, code runs on CPU)
 - ~100 GB disk space for SMOT4SB dataset
 
@@ -346,11 +347,11 @@ Production-grade performance would require domain fine-tuning with small-object 
 If you use this work, please cite:
 
 ```bibtex
-@inproceedings{smot4sb2025,
-  title={Small Multi-Object Tracking for Spotting Birds (SMOT4SB) Challenge},
-  author={{MVA2025 Organizing Committee}},
+@inproceedings{placeholder,
+  title={YOLO-DA and YOLO-DAST: Domain-Aware and Spatial Tiling Approaches for Small Multi-Object Tracking},
+  author={{placeholder}},
   year={2025},
-  howpublished={\url{https://mva-org.jp/mva2025/index.php?id=challenge}}
+  howpublished={\url{https://placeholder}}
 }
 ```
 
@@ -369,6 +370,8 @@ Key papers referenced in this work:
 - **HOTA**: Luiten et al. (2021) - HOTA: A Higher Order Metric for Evaluating Multi-Object Tracking
 
 See `references.bib` for complete bibliography.
+
+AI tools have been used to write whole or part of this README.md.
 
 ---
 
@@ -391,7 +394,7 @@ See `references.bib` for complete bibliography.
 **Solution**: Use smaller YOLO variants or reduce input size:
 
 ```python
-# Slower: YOLOv12m with imgsz=1920
+# Slower: YOLOv12s with imgsz=1920
 # Faster: YOLOv8s with imgsz=640 (but lower accuracy)
 ```
 
@@ -407,10 +410,14 @@ python run_baselines_per_video.py --num_videos 10  # Process 10 instead of 96
 
 ## Contact & Support
 
-For questions about the code, results, or methodology, refer to the paper: "Adaptive Detection Strategies for Small Flying Bird Tracking: Domain-Aware Parameter Optimization Under CPU Constraints"
+For questions about the code, results, or methodology, refer to the paper: "YOLO-DA and YOLO-DAST: Domain-Aware and Spatial Tiling Approaches for Small Multi-Object Tracking"
 
 ---
 
 ## License
 
-This project is provided as-is for academic research purposes.
+License: Academic Use Only
+
+This code is provided for research and educational purposes.
+If you use it, please cite the paper.
+If you do not use it, that is also fine — the birds will continue flying regardless.
